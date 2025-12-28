@@ -1,0 +1,54 @@
+﻿@HealthCareAB_HostAddress = http://localhost:5256
+@HealthCareAB_HostAddress_Https = https://localhost:7256
+
+### Health Check (om du har WeatherForecast)
+GET {{HealthCareAB_HostAddress}}/weatherforecast
+Accept: application/json
+
+###
+
+### Register a new user
+POST {{HealthCareAB_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123",
+  "roles": ["User"]
+}
+
+###
+
+### Register an admin user
+POST {{HealthCareAB_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123",
+  "roles": ["Admin"]
+}
+
+###
+
+### Login
+POST {{HealthCareAB_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
+### Check Authentication (requires login first)
+GET {{HealthCareAB_HostAddress}}/api/auth/check
+Accept: application/json
+
+###
+
+### Logout
+POST {{HealthCareAB_HostAddress}}/api/auth/logout
+
+###

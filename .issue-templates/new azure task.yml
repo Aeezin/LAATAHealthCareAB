@@ -1,0 +1,50 @@
+name: New Task
+description: Task
+labels: ["task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out the sections below to properly describe the new Task
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the task
+      placeholder: What needs to be done.
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Task needs to be done because
+      placeholder: It will allow to do Y that is needed for Z
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Technical details
+      placeholder: |
+        Add any technical details here.
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      value: |
+        - [ ]
+    validations: 
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      placeholder: |
+        Add any other context or screenshots about the task here.
+  - type: dropdown
+    id: assign
+    attributes:
+      label: "Would you like to work on this issue?"
+      options:
+        - "Yes"
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your suggestion! Let's see together if it can be implemented.
