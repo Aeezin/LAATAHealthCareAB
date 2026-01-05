@@ -24,6 +24,14 @@ body:
       label: Additional context
       placeholder: |
         Add any other context or screenshots about the feature request here.
+    - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      value: |
+        - [ ]
+    validations: 
+      required: true
   - type: dropdown
     id: assign
     attributes:
