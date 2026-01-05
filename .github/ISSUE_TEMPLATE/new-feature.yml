@@ -28,9 +28,9 @@ body:
       label: Technical details
       value: |
         **Tests**:
-          Positive:
-          Validation:
-          Edge Cases:
+        Positive:
+        Validation:
+        Edge Cases:
 
   - type: textarea
     id: definition-of-done
