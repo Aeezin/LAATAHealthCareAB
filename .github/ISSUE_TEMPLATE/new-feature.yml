@@ -27,11 +27,10 @@ body:
     attributes:
       label: Technical details
       value: |
-        **Dependencies**:
         **Tests**:
-        Positive:
-        Validation:
-        Edge Cases:
+          Positive:
+          Validation:
+          Edge Cases:
 
   - type: textarea
     id: definition-of-done
