@@ -28,9 +28,21 @@ body:
       label: Technical details
       value: |
         **Tests**:
-        Positive:
         Validation:
+        - Positive:
+           -
+        - Negative:
+           - 
+        Business Logic:
+        - Positive:
+           -
+        - Negative:
+           - 
         Edge Cases:
+        - Positive:
+           -
+        - Negative:
+           - 
 
   - type: textarea
     id: definition-of-done
