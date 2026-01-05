@@ -23,7 +23,7 @@ body:
       placeholder: It will allow to do Y that is needed for Z
 
   - type: textarea
-    id: context
+    id: technical details
     attributes:
       label: Technical details
       placeholder: |
