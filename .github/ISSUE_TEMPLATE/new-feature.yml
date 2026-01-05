@@ -1,6 +1,6 @@
 name: New feature
 description: Suggest or request a new feature
-labels: ["enhancement"]
+labels: ["feature"]
 
 body:
   - type: markdown
@@ -25,9 +25,9 @@ body:
   - type: textarea
     id: context
     attributes:
-      label: Additional context
+      label: Technical details
       placeholder: |
-        Add any other context or screenshots about the feature request here.
+        Add any other details or screenshots about the feature request here.
 
   - type: textarea
     id: definition-of-done
@@ -38,14 +38,3 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: assign
-    attributes:
-      label: "Would you like to work on this issue?"
-      options:
-        - "Yes"
-
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for your suggestion! Let's see together if it can be implemented.
