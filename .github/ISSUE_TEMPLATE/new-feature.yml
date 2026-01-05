@@ -26,8 +26,12 @@ body:
     id: technical-details
     attributes:
       label: Technical details
-      placeholder: |
-        Add any technical details about the feature here.
+      value: |
+        **Dependencies**:
+        **Tests**:
+        Positive:
+        Validation:
+        Edge Cases:
 
   - type: textarea
     id: definition-of-done
@@ -44,4 +48,5 @@ body:
       label: Additional context
       placeholder: |
         Add any other context or screenshots about the feature here.
+        
 
