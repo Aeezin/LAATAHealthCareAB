@@ -27,7 +27,7 @@ body:
     attributes:
       label: Technical details
       placeholder: |
-        Add any other details or screenshots about the feature request here.
+        Add any technical details about the feature here.
 
   - type: textarea
     id: definition-of-done
@@ -43,5 +43,5 @@ body:
     attributes:
       label: Additional context
       placeholder: |
-        Add any other context or screenshots about the task here.
+        Add any other context or screenshots about the feature here.
 
