@@ -37,4 +37,11 @@ body:
         - [ ]
     validations:
       required: true
+    
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      placeholder: |
+        Add any other context or screenshots about the task here.
 
