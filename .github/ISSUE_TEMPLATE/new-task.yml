@@ -38,13 +38,4 @@ body:
       label: Additional context
       placeholder: |
         Add any other context or screenshots about the task here.
-  - type: dropdown
-    id: assign
-    attributes:
-      label: "Would you like to work on this issue?"
-      options:
-        - "Yes"
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for your suggestion! Let's see together if it can be implemented.
+
