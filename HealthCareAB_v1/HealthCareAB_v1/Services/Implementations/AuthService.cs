@@ -22,13 +22,17 @@ namespace HealthCareAB_v1.Services
             IJwtTokenService jwtTokenService,
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor
+        )
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _jwtTokenService = jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
-            _jwtSettings = jwtSettings?.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
+            _jwtTokenService =
+                jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
+            _jwtSettings =
+                jwtSettings?.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
             _isDevelopment = environment?.IsDevelopment() ?? false;
-            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _httpContextAccessor =
+                httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         }
 
         /// <inheritdoc />
@@ -41,7 +45,7 @@ namespace HealthCareAB_v1.Services
                 return new AuthResponseDto
                 {
                     Success = false,
-                    Message = "Username is already taken"
+                    Message = "Username is already taken",
                 };
             }
 
@@ -52,7 +56,7 @@ namespace HealthCareAB_v1.Services
             {
                 Username = registerDto.Username,
                 PasswordHash = _userService.HashPassword(registerDto.Password),
-                Roles = roles
+                Roles = roles,
             };
 
             await _userService.CreateUserAsync(user);
@@ -62,7 +66,7 @@ namespace HealthCareAB_v1.Services
                 Success = true,
                 Message = "User registered successfully",
                 Username = user.Username,
-                Roles = user.Roles
+                Roles = user.Roles,
             };
         }
 
@@ -91,22 +95,28 @@ namespace HealthCareAB_v1.Services
 
             if (user == null || !_userService.VerifyPassword(loginDto.Password, user.PasswordHash))
             {
-                return (new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Invalid username or password"
-                }, null);
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
             }
 
             var token = _jwtTokenService.GenerateToken(user);
 
-            return (new AuthResponseDto
-            {
-                Success = true,
-                Message = "Login successful",
-                Username = user.Username,
-                Roles = user.Roles
-            }, token);
+            return (
+                new AuthResponseDto
+                {
+                    Success = true,
+                    Message = "Login successful",
+                    Username = user.Username,
+                    Roles = user.Roles,
+                },
+                token
+            );
         }
 
         /// <inheritdoc />
@@ -118,7 +128,7 @@ namespace HealthCareAB_v1.Services
                 Secure = !_isDevelopment,
                 Path = "/",
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpiryInMinutes)
+                Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.ExpiryInMinutes),
             };
         }
 
@@ -131,9 +141,8 @@ namespace HealthCareAB_v1.Services
                 Secure = !_isDevelopment,
                 SameSite = SameSiteMode.Strict,
                 Path = "/",
-                Expires = DateTimeOffset.UtcNow.AddDays(-1)
+                Expires = DateTimeOffset.UtcNow.AddDays(-1),
             };
         }
     }
 }
-

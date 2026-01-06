@@ -1,9 +1,9 @@
 ﻿using System.Security.Claims;
+using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.DTOs;
+using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using HealthCareAB_v1.Constants;
-using HealthCareAB_v1.Services.Interfaces;
 
 namespace HealthCareAB_v1.Controllers
 {
@@ -36,7 +36,13 @@ namespace HealthCareAB_v1.Controllers
 
             return CreatedAtAction(
                 nameof(CheckAuthentication),
-                new { message = result.Message, username = result.Username, roles = result.Roles });
+                new
+                {
+                    message = result.Message,
+                    username = result.Username,
+                    roles = result.Roles,
+                }
+            );
         }
 
         /// <summary>
@@ -57,7 +63,14 @@ namespace HealthCareAB_v1.Controllers
             var cookieOptions = _authService.GetJwtCookieOptions();
             HttpContext.Response.Cookies.Append(CookieNames.Jwt, token, cookieOptions);
 
-            return Ok(new { message = result.Message, username = result.Username, roles = result.Roles });
+            return Ok(
+                new
+                {
+                    message = result.Message,
+                    username = result.Username,
+                    roles = result.Roles,
+                }
+            );
         }
 
         /// <summary>
@@ -88,12 +101,19 @@ namespace HealthCareAB_v1.Controllers
             }
 
             var username = User.Identity.Name ?? "Unknown";
-            var roles = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role)
+            var roles = User
+                .Claims.Where(c => c.Type == ClaimTypes.Role)
                 .Select(c => c.Value)
                 .ToList();
 
-            return Ok(new { message = "Authenticated", username, roles });
+            return Ok(
+                new
+                {
+                    message = "Authenticated",
+                    username,
+                    roles,
+                }
+            );
         }
     }
 }

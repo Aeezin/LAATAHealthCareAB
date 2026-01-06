@@ -12,4 +12,3 @@ namespace HealthCareAB_v1.Services.Interfaces
         bool VerifyPassword(string enteredPassword, string storedHash);
     }
 }
-

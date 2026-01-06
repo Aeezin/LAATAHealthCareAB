@@ -13,4 +13,3 @@ namespace HealthCareAB_v1.Services.Interfaces
         string GenerateToken(User user);
     }
 }
-

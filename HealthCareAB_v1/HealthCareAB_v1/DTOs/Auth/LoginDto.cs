@@ -11,4 +11,3 @@ namespace HealthCareAB_v1.DTOs
         public string Password { get; set; }
     }
 }
-

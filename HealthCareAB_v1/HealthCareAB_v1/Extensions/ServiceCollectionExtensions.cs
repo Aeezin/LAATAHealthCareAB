@@ -1,4 +1,6 @@
-﻿using HealthCareAB_v1.Configuration;
+﻿using System.Text;
+using HealthCareAB_v1.Configuration;
+using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services;
@@ -6,8 +8,6 @@ using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using HealthCareAB_v1.Constants;
-using System.Text;
 
 namespace HealthCareAB_v1.Extensions
 {
@@ -24,30 +24,36 @@ namespace HealthCareAB_v1.Extensions
 
         public static IServiceCollection AddDatabase(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration
+        )
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+            );
 
             services.AddScoped<IAppDbContext>(provider =>
-                provider.GetRequiredService<AppDbContext>());
+                provider.GetRequiredService<AppDbContext>()
+            );
 
             return services;
         }
 
         public static IServiceCollection AddJwtAuthentication(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration
+        )
         {
             // Bind and validate JWT settings
-            var jwtSettings = configuration
-                .GetSection(JwtSettings.SectionName)
-                .Get<JwtSettings>()
-                ?? throw new InvalidOperationException("JwtSettings configuration section is missing");
+            var jwtSettings =
+                configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
+                ?? throw new InvalidOperationException(
+                    "JwtSettings configuration section is missing"
+                );
 
             services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -57,7 +63,7 @@ namespace HealthCareAB_v1.Extensions
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = false,
                         ValidIssuer = jwtSettings.Issuer,
-                        ValidAudience = jwtSettings.Audience
+                        ValidAudience = jwtSettings.Audience,
                     };
 
                     // Read JWT from HttpOnly cookie
@@ -67,7 +73,7 @@ namespace HealthCareAB_v1.Extensions
                         {
                             context.Token = context.Request.Cookies[CookieNames.Jwt];
                             return Task.CompletedTask;
-                        }
+                        },
                     };
                 });
 
@@ -75,4 +81,3 @@ namespace HealthCareAB_v1.Extensions
         }
     }
 }
-

@@ -11,4 +11,3 @@ namespace HealthCareAB_v1.Repositories.Interfaces
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
-

@@ -11,13 +11,17 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173") 
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials(); // Important for cookies
-    });
+    options.AddPolicy(
+        "AllowFrontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:3000", "http://localhost:5173")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials(); // Important for cookies
+        }
+    );
 });
 
 builder.Services.AddEndpointsApiExplorer();

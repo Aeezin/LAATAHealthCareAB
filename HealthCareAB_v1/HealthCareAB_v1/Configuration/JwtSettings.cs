@@ -25,4 +25,3 @@ namespace HealthCareAB_v1.Configuration
         public int ExpiryInMinutes { get; set; } = 60;
     }
 }
-

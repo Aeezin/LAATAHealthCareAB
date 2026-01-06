@@ -14,4 +14,3 @@
         public static IReadOnlyList<string> AllRoles => new[] { Admin, User };
     }
 }
-
