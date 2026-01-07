@@ -42,7 +42,7 @@ jobs:
           /d:sonar.qualitygate.wait=true
       
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build HealthCareAB_v1 --no-restore
       
     - name: Test with Coverage
       run: |
