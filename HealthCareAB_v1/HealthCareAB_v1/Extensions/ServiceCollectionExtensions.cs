@@ -56,12 +56,19 @@ namespace HealthCareAB_v1.Extensions
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
+                    var jwtSecret =
+                        Environment.GetEnvironmentVariable("JWT_SECRET")
+                        ?? throw new InvalidOperationException(
+                            "JWT_SECRET environment variable is not set."
+                        );
+                    var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateLifetime = true,
-                        ValidateIssuerSigningKey = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = signingKey,
                         ValidIssuer = jwtSettings.Issuer,
                         ValidAudience = jwtSettings.Audience,
                     };
