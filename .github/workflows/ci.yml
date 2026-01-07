@@ -46,7 +46,7 @@ jobs:
       
     - name: Test with Coverage
       run: |
-        dotnet test HealthCareAB.Test --no-build --verbosity normal \
+        dotnet test HealthCareAB_v1/HealthCareAB.Test --no-build --verbosity normal \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=opencover \
             /p:CoverletOutput=./TestResults/ \
