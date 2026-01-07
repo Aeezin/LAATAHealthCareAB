@@ -1,0 +1,60 @@
+name: CI-Pipeline
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+        
+    - name: Setup Java (required for SonarScanner)
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Install SonarScanner
+      run: dotnet tool install --global dotnet-sonarscanner
+      
+    - name: Restore dependencies
+      run: dotnet restore HealthCareAB_v1
+      
+    - name: Begin SonarCloud Analysis
+      run: |
+        dotnet sonarscanner begin \
+          /k:"Aeezin_LAATAHealthCareAB" \
+          /o:"aeezin" \
+          /d:sonar.host.url="https://sonarcloud.io" \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+          /d:sonar.exclusions="**/bin/**,**/obj/**" \
+          /d:sonar.qualitygate.wait=true
+      
+    - name: Build
+      run: dotnet build HealthCareAB_v1 --no-restore
+      
+    - name: Test with Coverage
+      run: |
+        dotnet test HealthCareAB_v1/HealthCareAB.Test --no-build --verbosity normal \
+            /p:CollectCoverage=true \
+            /p:CoverletOutputFormat=opencover \
+            /p:CoverletOutput=./TestResults/ \
+            /p:Threshold=80 \
+            /p:ThresholdType=line
+            /p:Include="[*]*Services.*"
+      
+    - name: End SonarCloud Analysis
+      run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
