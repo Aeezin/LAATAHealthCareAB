@@ -59,7 +59,7 @@ docker run --name [containername] \
   -p 5432:5432 \
   -d postgres:latest
 ```
-[] - signifies to use custom input.
+[text] - signifies to use custom input.
 
 3. Setting up database schema:
 ```
