@@ -28,7 +28,7 @@ jobs:
       run: dotnet tool install --global dotnet-sonarscanner
       
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore HealthCareAB_v1
       
     - name: Begin SonarCloud Analysis
       run: |
