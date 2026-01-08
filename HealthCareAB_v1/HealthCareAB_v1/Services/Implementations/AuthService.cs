@@ -55,7 +55,7 @@ namespace HealthCareAB_v1.Services
             var user = new User
             {
                 Username = registerDto.Username,
-                PasswordHash = _userService.HashPassword(registerDto.Password),
+              //  PasswordHash = _userService.HashPassword(registerDto.Password),
                 Roles = roles,
             };
 
@@ -93,17 +93,17 @@ namespace HealthCareAB_v1.Services
 
             var user = await _userService.GetUserByUsernameAsync(loginDto.Username);
 
-            if (user == null || !_userService.VerifyPassword(loginDto.Password, user.PasswordHash))
-            {
-                return (
-                    new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "Invalid username or password",
-                    },
-                    null
-                );
-            }
+            // if (user == null || !_userService.VerifyPassword(loginDto.Password, user.PasswordHash))
+            // {
+            //     return (
+            //         new AuthResponseDto
+            //         {
+            //             Success = false,
+            //             Message = "Invalid username or password",
+            //         },
+            //         null
+            //     );
+            // }
 
             var token = _jwtTokenService.GenerateToken(user);
 

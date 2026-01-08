@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "HealthCareAB.Bruno",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
