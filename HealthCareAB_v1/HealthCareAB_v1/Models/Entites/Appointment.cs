@@ -9,6 +9,7 @@ public class Appointment
 
     public required int PatientId { get; set; }
     public required int CaregiverId { get; set; }
+
     public required DateOnly Date { get; set; }
     public required TimeOnly StartTime { get; set; }
     public required TimeOnly EndTime { get; set; }
@@ -20,5 +21,8 @@ public class Appointment
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // TODO: Navigation Properties
+    // Navigation Properties
+    public Patient Patient { get; set; } = null!;
+    public Caregiver Caregiver { get; set; } = null!;
+    public Feedback? Feedback { get; set; }
 }

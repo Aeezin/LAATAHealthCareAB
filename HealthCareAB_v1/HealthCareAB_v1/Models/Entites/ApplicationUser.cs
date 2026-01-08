@@ -7,5 +7,7 @@ public class ApplicationUser : IdentityUser<int>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    // TODO: Navigation properties
+    // Navigation properties
+    public Patient? Patient { get; set; }
+    public Caregiver? Caregiver { get; set; }
 }
