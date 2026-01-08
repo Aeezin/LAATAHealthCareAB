@@ -39,22 +39,5 @@ namespace HealthCareAB_v1.Services
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
         }
-
-        /// <inheritdoc />
-        public string HashPassword(string password)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(password);
-            return BCrypt.Net.BCrypt.HashPassword(password);
-        }
-
-        /// <inheritdoc />
-        public bool VerifyPassword(string enteredPassword, string storedHash)
-        {
-            if (string.IsNullOrWhiteSpace(enteredPassword) || string.IsNullOrWhiteSpace(storedHash))
-            {
-                return false;
-            }
-            return BCrypt.Net.BCrypt.Verify(enteredPassword, storedHash);
-        }
     }
 }
