@@ -1,4 +1,4 @@
-namespace HealthCareAB_v1.Models.Entities;
+namespace HealthCareAB_v1.Models.Enums;
 
 public enum FeedbackStatus
 {

@@ -1,3 +1,5 @@
+using HealthCareAB_v1.Models.Enums;
+
 namespace HealthCareAB_v1.Models.Entities;
 
 public class Feedback
@@ -8,10 +10,10 @@ public class Feedback
     public required int Rating { get; set; }
 
     public string? Comment { get; set; }
-    public FeedbackStatus Status { get; set; }
+    public FeedbackStatus Status { get; set; } = FeedbackStatus.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime UpdateAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
     public Appointment Appointment { get; set; } = null!;
