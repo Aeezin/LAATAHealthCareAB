@@ -11,8 +11,8 @@ namespace HealthCareAB_v1.Configuration
     {
         public const string SectionName = "JwtSettings";
 
-        [Required]
-        [MinLength(32, ErrorMessage = "JWT Secret must be at least 32 characters for security")]
+        // Not validated - loaded from JWT_SECRET environment variable instead
+        // Kept here for backwards compatibility with config binding
         public string Secret { get; set; } = string.Empty;
 
         [Required]

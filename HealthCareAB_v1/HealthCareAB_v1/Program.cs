@@ -1,10 +1,13 @@
-﻿using HealthCareAB_v1.Extensions;
+﻿using DotNetEnv;
+using HealthCareAB_v1.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+Env.Load();
 
 // === ALLT DETTA MÅSTE VARA FÖRE builder.Build() ===
 builder.Services.AddControllers();
 builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddIdentityServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();

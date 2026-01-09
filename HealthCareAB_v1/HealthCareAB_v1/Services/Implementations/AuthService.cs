@@ -55,7 +55,7 @@ namespace HealthCareAB_v1.Services
             var user = new User
             {
                 Username = registerDto.Username,
-              //  PasswordHash = _userService.HashPassword(registerDto.Password),
+                //  PasswordHash = _userService.HashPassword(registerDto.Password),
                 Roles = roles,
             };
 
