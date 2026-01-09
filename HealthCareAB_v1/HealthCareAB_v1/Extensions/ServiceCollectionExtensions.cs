@@ -9,6 +9,8 @@ using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HealthCareAB_v1.Extensions
@@ -41,6 +43,36 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IAppDbContext>(provider =>
                 provider.GetRequiredService<AppDbContext>()
             );
+
+            return services;
+        }
+
+        public static IServiceCollection AddIdentityServices(this IServiceCollection services)
+        {
+            services
+                .AddIdentityCore<ApplicationUser>(options =>
+                {
+                    options.Password.RequireDigit = true;
+                    options.Password.RequiredUniqueChars = 1;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Password.RequiredLength = 8;
+
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(1);
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.AllowedForNewUsers = true;
+
+                    options.User.AllowedUserNameCharacters =
+                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                    options.User.RequireUniqueEmail = true;
+
+                    options.SignIn.RequireConfirmedEmail = false; //Set true if email verification is implemented.
+                })
+                //.AddRoles<IdentityRole>(); If we want to use identity cores role managment.
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddSignInManager<SignInManager<ApplicationUser>>()
+                .AddDefaultTokenProviders();
 
             return services;
         }
