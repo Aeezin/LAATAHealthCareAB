@@ -61,16 +61,7 @@ namespace HealthCareAB_v1.Services
             // Determine roles with security check
             var roles = DetermineUserRoles(registerDto.Roles);
 
-<<<<<<< HEAD
             var user = new ApplicationUser { UserName = registerDto.Username };
-=======
-            var user = new User
-            {
-                Username = registerDto.Username,
-                //  PasswordHash = _userService.HashPassword(registerDto.Password),
-                Roles = roles,
-            };
->>>>>>> 45d1464fb24d5360cf45f1789f63e9063bfaa3fc
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
 
