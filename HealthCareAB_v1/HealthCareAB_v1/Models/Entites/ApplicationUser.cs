@@ -11,5 +11,4 @@ public class ApplicationUser : IdentityUser<int>
     // Navigation properties
     public Patient? Patient { get; set; }
     public Caregiver? Caregiver { get; set; }
-    public IEnumerable<ClaimsIdentity?> Roles { get; internal set; }
 }
