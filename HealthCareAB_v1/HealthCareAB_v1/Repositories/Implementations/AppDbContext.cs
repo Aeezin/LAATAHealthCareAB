@@ -1,43 +1,77 @@
-﻿using System;
-using System.Text.Json;
-using HealthCareAB_v1.Models;
+﻿using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace HealthCareAB_v1.Repositories.Implementations
 {
-    public class AppDbContext : DbContext, IAppDbContext
+    public class AppDbContext
+        : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>,
+            IAppDbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
+
+        public DbSet<Patient> Patients { get; set; }
+        public DbSet<Caregiver> Caregivers { get; set; }
+        public DbSet<CaregiverSchedule> CaregiverSchedules { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.UseSerialColumns();
 
-            var rolesConverter = new ValueConverter<List<string>, string>(
-                v =>
-                    JsonSerializer.Serialize(
-                        v,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ),
-                v =>
-                    JsonSerializer.Deserialize<List<string>>(
-                        v,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ) ?? new List<string>()
-            );
+            // Patient relationships
+            modelBuilder
+                .Entity<Patient>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.Patient)
+                .HasForeignKey<Patient>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder
-                .Entity<User>()
-                .Property(e => e.Roles)
-                .HasConversion(rolesConverter)
-                .HasColumnType("jsonb");
-        }
+                .Entity<Patient>()
+                .HasMany(p => p.Appointments)
+                .WithOne(a => a.Patient)
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-        public DbSet<User> Users { get; set; }
+            // Caregiver relationships
+            modelBuilder
+                .Entity<Caregiver>()
+                .HasOne(c => c.User)
+                .WithOne(u => u.Caregiver)
+                .HasForeignKey<Caregiver>(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<Caregiver>()
+                .HasMany(c => c.Schedules)
+                .WithOne(s => s.Caregiver)
+                .HasForeignKey(s => s.CaregiverId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder
+                .Entity<Caregiver>()
+                .HasMany(c => c.Appointments)
+                .WithOne(a => a.Caregiver)
+                .HasForeignKey(a => a.CaregiverId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Appointment - Feedback relationship
+            modelBuilder
+                .Entity<Appointment>()
+                .HasOne(a => a.Feedback)
+                .WithOne(f => f.Appointment)
+                .HasForeignKey<Feedback>(f => f.AppointmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Unique constrants
+            modelBuilder.Entity<Patient>().HasIndex(p => p.PersonalIdentityNumber).IsUnique();
+        }
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
