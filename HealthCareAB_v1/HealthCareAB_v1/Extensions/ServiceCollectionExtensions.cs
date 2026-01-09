@@ -1,11 +1,13 @@
 ﻿using System.Text;
 using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.Constants;
+using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -28,8 +30,13 @@ namespace HealthCareAB_v1.Extensions
         )
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+                options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
+
+            services
+                .AddIdentity<ApplicationUser, IdentityRole<int>>(options => { })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddScoped<IAppDbContext>(provider =>
                 provider.GetRequiredService<AppDbContext>()
