@@ -4,6 +4,7 @@ using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services;
+using HealthCareAB_v1.Services.Implementations;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,9 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ICaregiverScheduleRepository, CaregiverScheduleRepository>();
+            services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
+
             return services;
         }
 
