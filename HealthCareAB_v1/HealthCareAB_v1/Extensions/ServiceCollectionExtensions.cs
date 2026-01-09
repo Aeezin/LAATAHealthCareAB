@@ -32,8 +32,13 @@ namespace HealthCareAB_v1.Extensions
         )
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+                options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
+
+            services
+                .AddIdentity<ApplicationUser, IdentityRole<int>>(options => { })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddScoped<IAppDbContext>(provider =>
                 provider.GetRequiredService<AppDbContext>()

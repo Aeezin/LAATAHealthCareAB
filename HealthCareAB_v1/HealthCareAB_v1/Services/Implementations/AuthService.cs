@@ -1,7 +1,9 @@
 ﻿using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.DTOs;
 using HealthCareAB_v1.Models;
+using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
 namespace HealthCareAB_v1.Services
@@ -12,6 +14,8 @@ namespace HealthCareAB_v1.Services
     public class AuthService : IAuthService
     {
         private readonly IUserService _userService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly JwtSettings _jwtSettings;
         private readonly bool _isDevelopment;
@@ -20,11 +24,16 @@ namespace HealthCareAB_v1.Services
         public AuthService(
             IUserService userService,
             IJwtTokenService jwtTokenService,
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor
         )
         {
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _signInManager =
+                signInManager ?? throw new ArgumentNullException(nameof(signInManager));
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _jwtTokenService =
                 jwtTokenService ?? throw new ArgumentNullException(nameof(jwtTokenService));
@@ -52,21 +61,27 @@ namespace HealthCareAB_v1.Services
             // Determine roles with security check
             var roles = DetermineUserRoles(registerDto.Roles);
 
-            var user = new User
-            {
-                Username = registerDto.Username,
-                //  PasswordHash = _userService.HashPassword(registerDto.Password),
-                Roles = roles,
-            };
+            var user = new ApplicationUser { UserName = registerDto.Username };
 
-            await _userService.CreateUserAsync(user);
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+
+            if (!result.Succeeded)
+            {
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
+                };
+            }
+
+            await _userManager.AddToRolesAsync(user, roles);
 
             return new AuthResponseDto
             {
                 Success = true,
                 Message = "User registered successfully",
-                Username = user.Username,
-                Roles = user.Roles,
+                Username = user.UserName,
+                Roles = roles,
             };
         }
 
@@ -105,15 +120,16 @@ namespace HealthCareAB_v1.Services
             //     );
             // }
 
-            var token = _jwtTokenService.GenerateToken(user);
+            var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
             return (
                 new AuthResponseDto
                 {
                     Success = true,
                     Message = "Login successful",
-                    Username = user.Username,
-                    Roles = user.Roles,
+                    Username = user.UserName,
+                    Roles = roles.ToList(),
                 },
                 token
             );
