@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 namespace HealthCareAB_v1.Models.Entities;
 
@@ -10,4 +11,5 @@ public class ApplicationUser : IdentityUser<int>
     // Navigation properties
     public Patient? Patient { get; set; }
     public Caregiver? Caregiver { get; set; }
+    public IEnumerable<ClaimsIdentity?> Roles { get; internal set; }
 }
