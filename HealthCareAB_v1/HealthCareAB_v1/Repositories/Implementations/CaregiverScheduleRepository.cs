@@ -1,7 +1,6 @@
-
-
-using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Interfaces;
+using HealthCareAB_v1.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace HealthCareAB_v1.Repositories.Implementations;
 

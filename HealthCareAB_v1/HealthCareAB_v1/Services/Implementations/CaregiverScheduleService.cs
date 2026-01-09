@@ -33,6 +33,13 @@ public class CaregiverScheduleService : ICaregiverScheduleService
             throw new CaregiverScheduleValidationException("StartTime must be before EndTime.");
         }
 
+        bool hasOverlap = await _caregiverScheduleRepository.HasOverlappingScheduleAsync(schedule.CaregiverId, schedule.DayOfWeek, schedule.StartTime, schedule.EndTime);
+
+        if (hasOverlap)
+        {
+            throw new CaregiverScheduleValidationException($"Schedule overlaps with an existing schedule for caregiver {schedule.CaregiverId} on {schedule.DayOfWeek}.");
+        }
+
         return await _caregiverScheduleRepository.CreateAsync(schedule);
     }
 }
