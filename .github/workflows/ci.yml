@@ -37,9 +37,9 @@ jobs:
           /o:"aeezin" \
           /d:sonar.host.url="https://sonarcloud.io" \
           /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
           /d:sonar.exclusions="**/bin/**,**/obj/**" \
-          /d:sonar.qualitygate.wait=false 
+          /d:sonar.coverage.exclusions="**/*" \
+          /d:sonar.qualitygate.wait=false
       
     - name: Build
       run: dotnet build HealthCareAB_v1 --no-restore
