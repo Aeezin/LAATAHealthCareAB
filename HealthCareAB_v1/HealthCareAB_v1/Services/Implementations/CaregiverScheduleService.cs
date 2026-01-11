@@ -42,4 +42,21 @@ public class CaregiverScheduleService : ICaregiverScheduleService
 
         return await _caregiverScheduleRepository.CreateAsync(schedule);
     }
+
+    public async Task<CaregiverSchedule> GetByIdAsync(int id)
+    {
+        var schedule = await _caregiverScheduleRepository.GetByIdAsync(id);
+
+        if (schedule == null)
+        {
+            throw new CaregiverScheduleNotFoundException($"Schedule with ID {id} not found.");
+        }
+
+        return schedule;
+    }
+
+    public async Task<List<CaregiverSchedule>> GetByCaregiverIdAsync(int caregiverId)
+    {
+        return await _caregiverScheduleRepository.GetByCaregiverIdAsync(caregiverId);
+    }
 }
