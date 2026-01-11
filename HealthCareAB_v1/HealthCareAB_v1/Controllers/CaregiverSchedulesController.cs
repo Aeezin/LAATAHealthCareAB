@@ -17,7 +17,7 @@ public class CaregiverSchedulesController : ControllerBase
         _caregiverScheduleService = caregiverScheduleService;
     }
 
-    // [Authorize(Roles = "Admin", "Caregiver)]
+    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateSchedule([FromBody] CreateCaregiverScheduleRequest req)
     {
@@ -56,6 +56,62 @@ public class CaregiverSchedulesController : ControllerBase
         catch (CaregiverScheduleValidationException ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "An unknown error occurred.");
+        }
+    }
+
+    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetSchedule(int id)
+    {
+        try
+        {
+            var schedule = await _caregiverScheduleService.GetByIdAsync(id);
+
+            var response = new CaregiverScheduleResponse
+            {
+                Id = schedule.Id,
+                CaregiverId = schedule.CaregiverId,
+                DayOfWeek = schedule.DayOfWeek,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                IsActive = schedule.IsActive
+            };
+
+            return Ok(response);
+        }
+        catch (CaregiverScheduleNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "An unknown error occurred.");
+        }
+    }
+
+    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
+    [HttpGet("caregiver/{caregiverId}")]
+    public async Task<IActionResult> GetCaregiverSchedules(int caregiverId)
+    {
+        try
+        {
+            var schedules = await _caregiverScheduleService.GetByCaregiverIdAsync(caregiverId);
+
+            var response = schedules.Select(s => new CaregiverScheduleResponse
+            {
+                Id = s.Id,
+                CaregiverId = s.CaregiverId,
+                DayOfWeek = s.DayOfWeek,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                IsActive = s.IsActive
+            }).ToList();
+
+            return Ok(response);
         }
         catch (Exception)
         {
