@@ -27,12 +27,19 @@ public class CaregiverScheduleService : ICaregiverScheduleService
             }
         */
 
-        // Valdation 2: StartTime < EndTime
+        // Validation 2: Weekday only (Monday-Friday)
+        if (schedule.DayOfWeek < DayOfWeek.Monday || schedule.DayOfWeek > DayOfWeek.Friday)
+        {
+            throw new CaregiverScheduleValidationException("Schedules can only be created for weekdays (Monday-Friday).");
+        }
+
+        // Valdation 3: StartTime < EndTime
         if (schedule.StartTime >= schedule.EndTime)
         {
             throw new CaregiverScheduleValidationException("StartTime must be before EndTime.");
         }
 
+        // Validation 4: No overlaps
         bool hasOverlap = await _caregiverScheduleRepository.HasOverlappingScheduleAsync(schedule.CaregiverId, schedule.DayOfWeek, schedule.StartTime, schedule.EndTime);
 
         if (hasOverlap)
