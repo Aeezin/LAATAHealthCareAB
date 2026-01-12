@@ -1,1 +1,1 @@
-namespace HealthCareAB_v1.Exceptions; {}
+namespace HealthCareAB_v1.Exceptions { }
