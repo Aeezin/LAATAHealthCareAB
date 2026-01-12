@@ -81,7 +81,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5256/api/Auth/login",
+        LOGIN_URL,
         credentials,
         {
           // withCredentials: true is required for the server to set HTTP-only cookies

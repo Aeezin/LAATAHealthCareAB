@@ -13,6 +13,7 @@ import Unauthorized from "./components/Unauthorized";
 import Home from "./components/Home";
 import RequireAuth from "./components/RequireAuth";
 import GlobalStyle from "./styles/GlobalStyle";
+import '@mantine/core/styles.css';
 
 // AuthProvider must wrap Router to ensure auth state is available to all routes
 function App() {
