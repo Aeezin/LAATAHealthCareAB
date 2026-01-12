@@ -27,6 +27,10 @@ namespace HealthCareAB_v1.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var result = await _authService.RegisterAsync(request);
 
             if (!result.Success)
