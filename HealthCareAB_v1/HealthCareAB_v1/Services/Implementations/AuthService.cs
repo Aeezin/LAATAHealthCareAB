@@ -1,7 +1,8 @@
 ﻿using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.DTOs;
-using HealthCareAB_v1.Models;
 using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Repositories.Implementations;
+using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -20,6 +21,15 @@ namespace HealthCareAB_v1.Services
         private readonly JwtSettings _jwtSettings;
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly AppDbContext _dbContext;
+        private IUserService object1;
+        private IJwtTokenService object2;
+        private UserManager<ApplicationUser> object3;
+        private SignInManager<ApplicationUser> object4;
+        private IOptions<JwtSettings> jwtOptions;
+        private IWebHostEnvironment object5;
+        private IHttpContextAccessor object6;
+        private IAppDbContext object7;
 
         public AuthService(
             IUserService userService,
@@ -28,7 +38,8 @@ namespace HealthCareAB_v1.Services
             SignInManager<ApplicationUser> signInManager,
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            AppDbContext dbContext
         )
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -42,6 +53,19 @@ namespace HealthCareAB_v1.Services
             _isDevelopment = environment?.IsDevelopment() ?? false;
             _httpContextAccessor =
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        }
+
+        public AuthService(IUserService object1, IJwtTokenService object2, UserManager<ApplicationUser> object3, SignInManager<ApplicationUser> object4, IOptions<JwtSettings> jwtOptions, IWebHostEnvironment object5, IHttpContextAccessor object6, IAppDbContext object7)
+        {
+            this.object1 = object1;
+            this.object2 = object2;
+            this.object3 = object3;
+            this.object4 = object4;
+            this.jwtOptions = jwtOptions;
+            this.object5 = object5;
+            this.object6 = object6;
+            this.object7 = object7;
         }
 
         /// <inheritdoc />
@@ -49,56 +73,78 @@ namespace HealthCareAB_v1.Services
         {
             ArgumentNullException.ThrowIfNull(registerDto);
 
-            if (await _userService.ExistsByUsernameAsync(registerDto.Username))
+            ApplicationUser? existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            if (existingUser != null)
             {
                 return new AuthResponseDto
                 {
                     Success = false,
-                    Message = "Username is already taken",
+                    Message = "Email is already taken"
                 };
             }
 
-            // Determine roles with security check
-            var roles = DetermineUserRoles(registerDto.Roles);
+            var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            var user = new ApplicationUser { UserName = registerDto.Username };
-
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (!result.Succeeded)
+            try
             {
+                ApplicationUser user = new ApplicationUser
+                {
+                    UserName = registerDto.Email,
+                    Email = registerDto.Email
+                };
+
+                IdentityResult createResult = await _userManager.CreateAsync(user, registerDto.Password);
+                if (!createResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", createResult.Errors.Select(e => e.Description))
+                    };
+                }
+
+                IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+                if (!roleResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", roleResult.Errors.Select(e => e.Description))
+                    };
+                }
+
+                Patient patient = new Patient
+                {
+                    UserId = user.Id,
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.Lastname,
+                    PhoneNumber = registerDto.PhoneNumber,
+                    DateOfBirth = registerDto.DateOfBirth,
+                    PersonalIdentityNumber = registerDto.PersonalIdentityNumber,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _dbContext.Patients.Add(patient);
+                await _dbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
                 return new AuthResponseDto
                 {
-                    Success = false,
-                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Success = true,
+                    Message = "User registered successfully",
+                    Username = user.Email,
+                    Roles = new List<string> { "Patient" }
                 };
             }
-
-            await _userManager.AddToRolesAsync(user, roles);
-
-            return new AuthResponseDto
+            catch
             {
-                Success = true,
-                Message = "User registered successfully",
-                Username = user.UserName,
-                Roles = roles,
-            };
-        }
-
-        /// <summary>
-        /// Determines the roles for a new user.
-        /// Default role is set to user.
-        /// </summary>
-        private List<string> DetermineUserRoles(List<string>? requestedRoles)
-        {
-            // If no roles requested, default to User
-            if (requestedRoles == null || !requestedRoles.Any())
-            {
-                return new List<string> { Roles.User };
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            // Return requested roles (original behavior)
-            return requestedRoles;
         }
 
         /// <inheritdoc />

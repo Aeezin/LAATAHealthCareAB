@@ -1,5 +1,6 @@
 ﻿using DotNetEnv;
 using HealthCareAB_v1.Extensions;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
@@ -31,6 +32,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+var scope = app.Services.CreateAsyncScope();
+
+RoleManager<IdentityRole<int>> roleManager =
+    scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+bool roleExist = await roleManager.RoleExistsAsync("Patient");
+if (!roleExist)
+{
+    var roleResut = await roleManager.CreateAsync(new IdentityRole<int>("Patient"));
+}
 
 if (app.Environment.IsDevelopment())
 {
