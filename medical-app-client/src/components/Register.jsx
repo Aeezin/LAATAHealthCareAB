@@ -61,7 +61,6 @@ function Register() {
   const [passwordPopoverOpened, setPasswordPopoverOpened] = useState(false);
   const [confirmPasswordPopoverOpened, setConfirmPasswordPopoverOpened] = useState(false);
   const [emailPopoverOpened, setEmailPopoverOpened] = useState(false);
-  const [addressPopoverOpened, setAddressPopoverOpened] = useState(false);
   const [firstNamePopoverOpened, setFirstNamePopoverOpened] = useState(false);
   const [lastNamePopoverOpened, setLastNamePopoverOpened] = useState(false);
   const [personalIdPopoverOpened, setPersonalIdPopoverOpened] = useState(false);
@@ -78,7 +77,6 @@ function Register() {
     firstName: "",
     lastName: "",
     email: "",
-    address: "",
   });
 
   const checks = requirements.map((requirement, index) => (
@@ -95,8 +93,7 @@ function Register() {
     confirmPassword.trim() !== "" &&
     credentials.firstName.trim() !== "" &&
     credentials.lastName.trim() !== "" &&
-    credentials.email.trim() !== "" &&
-    credentials.address.trim() !== "";
+    credentials.email.trim() !== "";
 
   const isFormValid = allFieldsFilled && strength === 100 && match;
 
@@ -125,10 +122,6 @@ function Register() {
 
     if (!validateEmail(credentials.email)) {
       errors.email = "Invalid email address";
-    }
-
-    if (!validateAddress(credentials.address)) {
-      errors.address = "Please provide street, city, and zip code (comma separated)";
     }
 
     if (credentials.firstName.trim().length < 2) {
@@ -214,7 +207,7 @@ function Register() {
           </Popover.Target>
           <Popover.Dropdown>
             <FieldRequirement
-              label="Valid personal identity number format: YYMMDD-xxxx"
+              label="Valid personal identity number format: YYMMDD-XXXX"
               meets={validatePersonalIdentityNumber(credentials.personalIdentityNumber) === true}
             />
           </Popover.Dropdown>
@@ -321,25 +314,7 @@ function Register() {
           </Popover.Dropdown>
         </Popover>
 
-        <Popover opened={addressPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
-          <Popover.Target>
-            <div onFocusCapture={() => setAddressPopoverOpened(true)} onBlurCapture={() => setAddressPopoverOpened(false)}>
-              <TextInput
-                label="Address"
-                name="address"
-                placeholder="Street, City, Zip"
-                required
-                value={credentials.address}
-                onChange={handleInputChange}
-                error={validationErrors.address}
-              />
-            </div>
-          </Popover.Target>
-          <Popover.Dropdown>
-            <FieldRequirement label="Valid address format: Street name + number, postal code, and city"  meets={validateAddress(credentials.address) === true} />
-          </Popover.Dropdown>
-        </Popover>
-        <RegisterButton disabled={!isFormValid} type="submit">
+        <RegisterButton disabled={isFormValid} type="submit">
           Register
         </RegisterButton>
       </FormWrapper>
@@ -379,18 +354,6 @@ const validateEmail = (email) => {
   // Standard email validation
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
-};
-
-const validateAddress = (address) => {
-  // Basic validation: street, postal code, and city (comma separated)
-  const parts = address.split(",").map((part) => part.trim());
-
-  return (
-    parts.length >= 3 && // at least street, postal code, city
-    parts.every((part) => part.length > 0) && // no empty parts
-    /^[A-Za-zÅÄÖåäö\s]+ \d+$/.test(parts[0]) && // street name followed by number
-    /^\d{3}\s?\d{2}$/.test(parts[1]) // Swedish postal code
-  );
 };
 
 export default Register;
