@@ -7,13 +7,13 @@ using Moq;
 
 namespace HealthCareAB_v1.Tests.Services;
 
-public class CaregiverScheduleServiceTests
+public class GetCaregiverScheduleTests
 {
     private readonly Mock<ICaregiverScheduleRepository> _mockRepository;
     private readonly Mock<ICaregiverRepository> _mockCaregiverRepository;
     private readonly CaregiverScheduleService _service;
 
-    public CaregiverScheduleServiceTests()
+    public GetCaregiverScheduleTests()
     {
         _mockRepository = new Mock<ICaregiverScheduleRepository>();
         _mockCaregiverRepository = new Mock<ICaregiverRepository>();
