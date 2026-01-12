@@ -3,8 +3,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using HealthCareAB_v1.Configuration;
-using HealthCareAB_v1.Models;
+using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,27 +17,34 @@ namespace HealthCareAB_v1.Services
     public class JwtTokenService : IJwtTokenService
     {
         private readonly JwtSettings _jwtSettings;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public JwtTokenService(IOptions<JwtSettings> jwtSettings)
+        public JwtTokenService(
+            IOptions<JwtSettings> jwtSettings,
+            UserManager<ApplicationUser> userManager
+        )
         {
             _jwtSettings =
                 jwtSettings.Value ?? throw new ArgumentNullException(nameof(jwtSettings));
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         }
 
         /// <inheritdoc />
-        public string GenerateToken(User user)
+        public async Task<string> GenerateToken(ApplicationUser user)
         {
             ArgumentNullException.ThrowIfNull(user);
+
+            var roles = await _userManager.GetRolesAsync(user);
 
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Name, user.Username),
+                new(ClaimTypes.Name, user.UserName ?? string.Empty),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             };
 
             // Add role claims for authorization
-            claims.AddRange(user.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

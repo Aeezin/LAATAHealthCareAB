@@ -1,5 +1,5 @@
 ﻿using System;
-using HealthCareAB_v1.Models;
+using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -22,18 +22,18 @@ namespace HealthCareAB_v1.Services
         public async Task<bool> ExistsByUsernameAsync(string username)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(username);
-            return await _context.Users.AnyAsync(u => u.Username == username);
+            return await _context.Users.AnyAsync(u => u.UserName == username);
         }
 
         /// <inheritdoc />
-        public async Task<User?> GetUserByUsernameAsync(string username)
+        public async Task<ApplicationUser?> GetUserByUsernameAsync(string username)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(username);
-            return await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
         }
 
         /// <inheritdoc />
-        public async Task CreateUserAsync(User user)
+        public async Task CreateUserAsync(ApplicationUser user)
         {
             ArgumentNullException.ThrowIfNull(user);
             await _context.Users.AddAsync(user);
