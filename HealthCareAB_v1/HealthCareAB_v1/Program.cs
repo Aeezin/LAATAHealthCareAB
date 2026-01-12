@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
+builder.Configuration.AddEnvironmentVariables();
+
 // === ALLT DETTA MÅSTE VARA FÖRE builder.Build() ===
 builder.Services.AddControllers();
 builder.Services.AddDatabase(builder.Configuration);
@@ -21,7 +23,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:3000", "http://localhost:5173")
+                .WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5256")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials(); // Important for cookies

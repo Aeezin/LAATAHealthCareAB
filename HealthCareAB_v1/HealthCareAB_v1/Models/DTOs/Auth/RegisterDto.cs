@@ -25,7 +25,7 @@ namespace HealthCareAB_v1.DTOs
         public string DateOfBirth { get; set; } = null!;
 
         [Required(ErrorMessage = "Correct personal identity number is required")]
-        [RegularExpression(@"^{4}0-9")]
+        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
         public string PersonalIdentityNumber { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]

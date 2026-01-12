@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using DotNetEnv;
 using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Models.Entities;
@@ -31,6 +32,9 @@ namespace HealthCareAB_v1.Extensions
             IConfiguration configuration
         )
         {
+            // Ensure .env is loaded (needed for 'dotnet ef' commands that don't run Program.cs)
+            Env.Load();
+
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
