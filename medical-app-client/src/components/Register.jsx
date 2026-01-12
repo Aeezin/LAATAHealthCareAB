@@ -64,6 +64,7 @@ function Register() {
   const [firstNamePopoverOpened, setFirstNamePopoverOpened] = useState(false);
   const [lastNamePopoverOpened, setLastNamePopoverOpened] = useState(false);
   const [personalIdPopoverOpened, setPersonalIdPopoverOpened] = useState(false);
+  const [phonePopoverOpened, setPhonePopoverOpened] = useState(false);
 
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -77,6 +78,7 @@ function Register() {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
   });
 
   const checks = requirements.map((requirement, index) => (
@@ -95,7 +97,7 @@ function Register() {
     credentials.lastName.trim() !== "" &&
     credentials.email.trim() !== "";
 
-  const isFormValid = allFieldsFilled && strength === 100 && match;
+  const isFormValid = allFieldsFilled && strength === 100 && match && (credentials.phone.length === 0 || isValidSwedishPhoneNumber(credentials.phone));
 
   const handleInputChange = (e) => {
     setCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -122,6 +124,10 @@ function Register() {
 
     if (!validateEmail(credentials.email)) {
       errors.email = "Invalid email address";
+    }
+
+    if (credentials.phone.length > 0 && !isValidSwedishPhoneNumber(credentials.phone)) {
+      errors.phone = "Invalid phone number";
     }
 
     if (credentials.firstName.trim().length < 2) {
@@ -314,7 +320,26 @@ function Register() {
           </Popover.Dropdown>
         </Popover>
 
-        <RegisterButton disabled={isFormValid} type="submit">
+        <Popover type="tel" opened={phonePopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setPhonePopoverOpened(true)} onBlurCapture={() => setPhonePopoverOpened(false)}>
+              <TextInput
+                label="Phone"
+                name="phone"
+                type="phone"
+                placeholder="example@domain.com"
+                value={credentials.phone}
+                onChange={handleInputChange}
+                error={validationErrors.phone}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown hidden={credentials.phone.length === 0}>
+            <FieldRequirement label="Valid phone number format" meets={isValidSwedishPhoneNumber(credentials.phone) === true} />
+          </Popover.Dropdown>
+        </Popover>
+
+        <RegisterButton disabled={!isFormValid} type="submit">
           Register
         </RegisterButton>
       </FormWrapper>
@@ -355,5 +380,25 @@ const validateEmail = (email) => {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
 };
+
+function cleanNumber(number) {
+  // Ta bort allt som inte är siffror
+  return number.replace(/\D/g, "");
+}
+
+function isValidSwedishPhoneNumber(number) {
+  let digits = cleanNumber(number);
+
+  // Hantera landsnummer +46
+  if (digits.startsWith("46")) digits = "0" + digits.slice(2);
+
+  // Mobilnummer 07xx
+  if (digits.startsWith("07") && digits.length === 10) return true;
+
+  // Fast telefoni (8–10 siffror)
+  if (digits.startsWith("0") && digits.length >= 8 && digits.length <= 10) return true;
+
+  return false;
+}
 
 export default Register;
