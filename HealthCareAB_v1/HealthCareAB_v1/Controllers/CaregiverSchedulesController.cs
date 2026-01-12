@@ -115,4 +115,38 @@ public class CaregiverSchedulesController : ControllerBase
             return StatusCode(500, "An unknown error occurred.");
         }
     }
+
+    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateSchedule(int id, [FromBody] UpdateCaregiverScheduleRequest req)
+    {
+        try
+        {
+            var updated = await _caregiverScheduleService.UpdateAsync(id, req);
+
+            var response = new CaregiverScheduleResponse
+            {
+                Id = updated.Id,
+                CaregiverId = updated.CaregiverId,
+                DayOfWeek = updated.DayOfWeek,
+                StartTime = updated.StartTime,
+                EndTime = updated.EndTime,
+                IsActive = updated.IsActive
+            };
+
+            return Ok(response);
+        }
+        catch (CaregiverScheduleNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (CaregiverScheduleValidationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "An unknown error occurred.");
+        }
+    }
 }

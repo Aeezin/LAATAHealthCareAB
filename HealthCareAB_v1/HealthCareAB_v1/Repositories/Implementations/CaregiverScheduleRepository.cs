@@ -34,16 +34,30 @@ public class CaregiverScheduleRepository : ICaregiverScheduleRepository
             .ToListAsync();
     }
 
-    public async Task<bool> HasOverlappingScheduleAsync(int caregiverId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime)
+    public async Task<CaregiverSchedule> UpdateAsync(CaregiverSchedule schedule)
     {
-        return await _context.CaregiverSchedules
+        _context.CaregiverSchedules.Update(schedule);
+        await _context.SaveChangesAsync();
+        return schedule;
+    }
+
+    public async Task<bool> HasOverlappingScheduleAsync(int caregiverId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime, int? excludeScheduleId = null)
+    {
+        var query = _context.CaregiverSchedules
             .Where(s => s.CaregiverId == caregiverId
                      && s.DayOfWeek == dayOfWeek
-                     && s.IsActive)
-            .AnyAsync(s =>
-                // Check all three overlap scenarios:
-                (startTime >= s.StartTime && startTime < s.EndTime) ||      // New start overlaps existing
-                (endTime > s.StartTime && endTime <= s.EndTime) ||          // New end overlaps existing
-                (startTime <= s.StartTime && endTime >= s.EndTime));        // New schedule encompasses existing
+                     && s.IsActive);
+
+        // Exclude the schedule being updated from overlap check
+        if (excludeScheduleId.HasValue)
+        {
+            query = query.Where(s => s.Id != excludeScheduleId.Value);
+        }
+
+        return await query.AnyAsync(s =>
+            // Check all three overlap scenarios:
+            (startTime >= s.StartTime && startTime < s.EndTime) ||      // New start overlaps existing
+            (endTime > s.StartTime && endTime <= s.EndTime) ||          // New end overlaps existing
+            (startTime <= s.StartTime && endTime >= s.EndTime));        // New schedule encompasses existing
     }
 }
