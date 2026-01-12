@@ -22,14 +22,6 @@ namespace HealthCareAB_v1.Services
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly AppDbContext _dbContext;
-        private IUserService object1;
-        private IJwtTokenService object2;
-        private UserManager<ApplicationUser> object3;
-        private SignInManager<ApplicationUser> object4;
-        private IOptions<JwtSettings> jwtOptions;
-        private IWebHostEnvironment object5;
-        private IHttpContextAccessor object6;
-        private IAppDbContext object7;
 
         public AuthService(
             IUserService userService,
@@ -54,18 +46,6 @@ namespace HealthCareAB_v1.Services
             _httpContextAccessor =
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        }
-
-        public AuthService(IUserService object1, IJwtTokenService object2, UserManager<ApplicationUser> object3, SignInManager<ApplicationUser> object4, IOptions<JwtSettings> jwtOptions, IWebHostEnvironment object5, IHttpContextAccessor object6, IAppDbContext object7)
-        {
-            this.object1 = object1;
-            this.object2 = object2;
-            this.object3 = object3;
-            this.object4 = object4;
-            this.jwtOptions = jwtOptions;
-            this.object5 = object5;
-            this.object6 = object6;
-            this.object7 = object7;
         }
 
         /// <inheritdoc />
