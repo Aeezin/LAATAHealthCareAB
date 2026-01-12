@@ -10,12 +10,16 @@ namespace HealthCareAB_v1.Tests.Services;
 public class CaregiverScheduleServiceTests
 {
     private readonly Mock<ICaregiverScheduleRepository> _mockRepository;
+    private readonly Mock<ICaregiverRepository> _mockCaregiverRepository;
     private readonly CaregiverScheduleService _service;
 
     public CaregiverScheduleServiceTests()
     {
         _mockRepository = new Mock<ICaregiverScheduleRepository>();
-        _service = new CaregiverScheduleService(_mockRepository.Object);
+        _mockCaregiverRepository = new Mock<ICaregiverRepository>();
+        _service = new CaregiverScheduleService(
+            _mockRepository.Object,
+            _mockCaregiverRepository.Object);
     }
 
     #region GetByIdAsync - Validation Tests

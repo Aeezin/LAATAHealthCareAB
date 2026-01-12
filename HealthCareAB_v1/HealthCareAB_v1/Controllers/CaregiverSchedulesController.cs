@@ -43,11 +43,8 @@ public class CaregiverSchedulesController : ControllerBase
                 IsActive = true
             };
 
-            // return CreatedAtAction(nameof(GetSchedule),
-            //      new { id = response.Id }, response);
-
-            return Ok(response); // Replace this with the above commented-out CreatedAtAction once the GET endpoint has been constructed. 
-
+            return CreatedAtAction(nameof(GetSchedule),
+                  new { id = response.Id }, response);
         }
         catch (CaregiverScheduleNotFoundException ex)
         {
