@@ -78,6 +78,13 @@ namespace HealthCareAB_v1.Extensions
             return services;
         }
 
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<ICaregiverRepository, CaregiverRepository>();
+            return services;
+        }
+
         public static IServiceCollection AddJwtAuthentication(
             this IServiceCollection services,
             IConfiguration configuration

@@ -27,7 +27,6 @@ namespace HealthCareAB_v1.Controllers
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -44,34 +43,6 @@ namespace HealthCareAB_v1.Controllers
                 {
                     message = result.Message,
                     username = result.Username,
-                    roles = result.Roles,
-                }
-            );
-        }
-
-        /// <summary>
-        /// Authenticates a user and sets JWT cookie.
-        /// </summary>
-        [HttpPost("login")]
-        [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Login([FromBody] LoginDto request)
-        {
-            var (result, token) = await _authService.LoginAsync(request);
-
-            if (!result.Success || string.IsNullOrEmpty(token))
-            {
-                return Unauthorized(new { message = result.Message });
-            }
-
-            var cookieOptions = _authService.GetJwtCookieOptions();
-            HttpContext.Response.Cookies.Append(CookieNames.Jwt, token, cookieOptions);
-
-            return Ok(
-                new
-                {
-                    message = result.Message,
-                    loggedInUser = result.Username,
                     roles = result.Roles,
                 }
             );

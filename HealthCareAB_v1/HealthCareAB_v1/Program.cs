@@ -11,6 +11,7 @@ builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddIdentityServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddRepositories();
 builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
@@ -35,8 +36,9 @@ var app = builder.Build();
 
 var scope = app.Services.CreateAsyncScope();
 
-RoleManager<IdentityRole<int>> roleManager =
-    scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
+RoleManager<IdentityRole<int>> roleManager = scope.ServiceProvider.GetRequiredService<
+    RoleManager<IdentityRole<int>>
+>();
 
 bool roleExist = await roleManager.RoleExistsAsync("Patient");
 if (!roleExist)

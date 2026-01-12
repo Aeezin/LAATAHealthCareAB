@@ -22,14 +22,8 @@ namespace HealthCareAB_v1.Services
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly AppDbContext _dbContext;
-        private IUserService object1;
-        private IJwtTokenService object2;
-        private UserManager<ApplicationUser> object3;
-        private SignInManager<ApplicationUser> object4;
-        private IOptions<JwtSettings> jwtOptions;
-        private IWebHostEnvironment object5;
-        private IHttpContextAccessor object6;
-        private IAppDbContext object7;
+        private readonly IPatientRepository _patientRepository;
+        private readonly ICaregiverRepository _caregiverRepository;
 
         public AuthService(
             IUserService userService,
@@ -39,7 +33,9 @@ namespace HealthCareAB_v1.Services
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
-            AppDbContext dbContext
+            AppDbContext dbContext,
+            IPatientRepository patientRepository,
+            ICaregiverRepository caregiverRepository
         )
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -54,18 +50,8 @@ namespace HealthCareAB_v1.Services
             _httpContextAccessor =
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        }
-
-        public AuthService(IUserService object1, IJwtTokenService object2, UserManager<ApplicationUser> object3, SignInManager<ApplicationUser> object4, IOptions<JwtSettings> jwtOptions, IWebHostEnvironment object5, IHttpContextAccessor object6, IAppDbContext object7)
-        {
-            this.object1 = object1;
-            this.object2 = object2;
-            this.object3 = object3;
-            this.object4 = object4;
-            this.jwtOptions = jwtOptions;
-            this.object5 = object5;
-            this.object6 = object6;
-            this.object7 = object7;
+            _patientRepository = patientRepository;
+            _caregiverRepository = caregiverRepository;
         }
 
         /// <inheritdoc />
@@ -76,11 +62,7 @@ namespace HealthCareAB_v1.Services
             ApplicationUser? existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
             if (existingUser != null)
             {
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Email is already taken"
-                };
+                return new AuthResponseDto { Success = false, Message = "Email is already taken" };
             }
 
             var transaction = await _dbContext.Database.BeginTransactionAsync();
@@ -90,17 +72,20 @@ namespace HealthCareAB_v1.Services
                 ApplicationUser user = new ApplicationUser
                 {
                     UserName = registerDto.Email,
-                    Email = registerDto.Email
+                    Email = registerDto.Email,
                 };
 
-                IdentityResult createResult = await _userManager.CreateAsync(user, registerDto.Password);
+                IdentityResult createResult = await _userManager.CreateAsync(
+                    user,
+                    registerDto.Password
+                );
                 if (!createResult.Succeeded)
                 {
                     await transaction.RollbackAsync();
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = string.Join(", ", createResult.Errors.Select(e => e.Description))
+                        Message = string.Join(", ", createResult.Errors.Select(e => e.Description)),
                     };
                 }
 
@@ -111,7 +96,7 @@ namespace HealthCareAB_v1.Services
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = string.Join(", ", roleResult.Errors.Select(e => e.Description))
+                        Message = string.Join(", ", roleResult.Errors.Select(e => e.Description)),
                     };
                 }
 
@@ -124,7 +109,7 @@ namespace HealthCareAB_v1.Services
                     DateOfBirth = registerDto.DateOfBirth,
                     PersonalIdentityNumber = registerDto.PersonalIdentityNumber,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
                 };
 
                 _dbContext.Patients.Add(patient);
@@ -137,7 +122,7 @@ namespace HealthCareAB_v1.Services
                     Success = true,
                     Message = "User registered successfully",
                     Username = user.Email,
-                    Roles = new List<string> { "Patient" }
+                    Roles = new List<string> { "Patient" },
                 };
             }
             catch
@@ -148,11 +133,88 @@ namespace HealthCareAB_v1.Services
         }
 
         /// <inheritdoc />
-        public async Task<(AuthResponseDto response, string? token)> LoginAsync(LoginDto loginDto)
+        public async Task<(AuthResponseDto response, string? token)> LoginPatientAsync(
+            string personalIdentityNumber,
+            string password
+        )
         {
-            ArgumentNullException.ThrowIfNull(loginDto);
+            ArgumentException.ThrowIfNullOrWhiteSpace(personalIdentityNumber);
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
 
-            var user = await _userManager.FindByNameAsync(loginDto.Username);
+            var patient = await _patientRepository.GetByPersonalIdentityNumberAsync(
+                personalIdentityNumber
+            );
+
+            if (patient == null)
+            {
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
+
+            var user = await _userManager.FindByIdAsync(patient.UserId.ToString());
+
+            if (user == null)
+            {
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                password,
+                isPersistent: false,
+                lockoutOnFailure: true
+            );
+
+            if (result.Succeeded == false)
+            {
+                if (result.IsLockedOut)
+                {
+                    return (
+                        new AuthResponseDto
+                        {
+                            IsLockedOut = true,
+                            Success = false,
+                            Message = "Account Locked",
+                        },
+                        null
+                    );
+                }
+
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
+
+            var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return (
+                new AuthResponseDto
+                {
+                    Success = true,
+                    Message = "Login successful",
+                    Username = user.UserName ?? "",
+                    Roles = roles.ToList(),
+                },
+                token
+            );
+        }
+
+        public async Task<(AuthResponseDto response, string? token)> LoginCaregiverAsync(
+            string username,
+            string password
+        )
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
+
+            var user = await _userManager.FindByNameAsync(username);
 
             if (user == null)
             {
@@ -165,15 +227,30 @@ namespace HealthCareAB_v1.Services
                     null
                 );
             }
+
+            var caregiver = await _caregiverRepository.GetByUserIdAsync(user.Id);
+            if (caregiver == null)
+            {
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
                 user,
-                loginDto.Password,
+                password,
                 isPersistent: false,
                 lockoutOnFailure: true
             );
+
             if (result.Succeeded == false)
             {
-                if (result.IsLockedOut == true)
+                if (result.IsLockedOut)
                 {
                     return (
                         new AuthResponseDto
@@ -185,10 +262,10 @@ namespace HealthCareAB_v1.Services
                         null
                     );
                 }
+
                 return (
                     new AuthResponseDto
                     {
-                        IsLockedOut = true,
                         Success = false,
                         Message = "Invalid username or password",
                     },
@@ -204,7 +281,7 @@ namespace HealthCareAB_v1.Services
                 {
                     Success = true,
                     Message = "Login successful",
-                    Username = user.UserName,
+                    Username = user.UserName ?? "",
                     Roles = roles.ToList(),
                 },
                 token
