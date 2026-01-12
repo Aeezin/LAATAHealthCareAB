@@ -4,7 +4,8 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { IconX, IconCheck } from "@tabler/icons-react";
-import { PasswordInput, Progress, Text, Popover, Box, Stack, TextInput } from "@mantine/core";
+import { PasswordInput, Progress, Text, Popover, Box, Stack, TextInput, Button } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import PropTypes from "prop-types";
 
 const REGISTER_URL = "http://localhost:5256/api/Auth/register";
@@ -14,24 +15,8 @@ const RegisterContainer = styled(Stack)`
   align-items: center;
 `;
 
-const RegisterButton = styled.button`
-  cursor: pointer;
-  padding: 10px 30px;
-  background-color: #057d7a;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #fff;
+const RegisterButton = styled(Button)`
   margin-top: 40px;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  text-align: center;
-  border: none;
-
-  &:hover {
-    background-color: #2fadaa;
-    transform: translateY(-3px);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
-  }
 `;
 
 const Title = styled.h2`
@@ -49,19 +34,6 @@ const FormWrapper = styled.form`
   gap: 10px;
 `;
 
-function PasswordRequirement({ meets, label }) {
-  return (
-    <Text component="div" c={meets ? "teal" : "red"} style={{ display: "flex", alignItems: "center", paddingBottom: "15px" }} mt={7} size="sm">
-      {meets ? <IconCheck size={14} /> : <IconX size={14} />}
-      <Box ml={10}>{label}</Box>
-    </Text>
-  );
-}
-PasswordRequirement.propTypes = {
-  meets: PropTypes.bool.isRequired,
-  label: PropTypes.string.isRequired,
-};
-
 const requirements = [
   { re: /[0-9]/, label: "Includes number" },
   { re: /[a-z]/, label: "Includes lowercase letter" },
@@ -69,23 +41,36 @@ const requirements = [
   { re: /[$&+,:;=?@#|'<>.^*()%!-]/, label: "Includes special symbol" },
 ];
 
-function getStrength(password) {
-  let multiplier = password.length > 5 ? 0 : 1;
-
-  requirements.forEach((requirement) => {
-    if (!requirement.re.test(password)) {
-      multiplier += 1;
-    }
-  });
-
-  return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
+function FieldRequirement({ meets, label }) {
+  return (
+    <Text component="div" c={meets ? "teal" : "red"} style={{ display: "flex", alignItems: "center", paddingBottom: "15px" }} mt={7} size="sm">
+      {meets ? <IconCheck size={14} /> : <IconX size={14} />}
+      <Box ml={10}>{label}</Box>
+    </Text>
+  );
 }
+
+FieldRequirement.propTypes = {
+  meets: PropTypes.bool.isRequired,
+  label: PropTypes.string.isRequired,
+};
 
 function Register() {
   const { setAuthState } = useAuth();
   const navigate = useNavigate();
-  const [popoverOpened, setPopoverOpened] = useState(false);
+  const [passwordPopoverOpened, setPasswordPopoverOpened] = useState(false);
+  const [confirmPasswordPopoverOpened, setConfirmPasswordPopoverOpened] = useState(false);
+  const [emailPopoverOpened, setEmailPopoverOpened] = useState(false);
+  const [addressPopoverOpened, setAddressPopoverOpened] = useState(false);
+  const [firstNamePopoverOpened, setFirstNamePopoverOpened] = useState(false);
+  const [lastNamePopoverOpened, setLastNamePopoverOpened] = useState(false);
+  const [personalIdPopoverOpened, setPersonalIdPopoverOpened] = useState(false);
+
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [visible, { toggle }] = useDisclosure(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
 
   const [credentials, setCredentials] = useState({
     personalIdentityNumber: "",
@@ -96,17 +81,87 @@ function Register() {
     address: "",
   });
 
-  const checks = requirements.map((requirement, index) => <PasswordRequirement key={index} label={requirement.label} meets={requirement.re.test(credentials.password)} />);
+  const checks = requirements.map((requirement, index) => (
+    <FieldRequirement key={index} label={requirement.label} meets={requirement.re.test(credentials.password)} />
+  ));
 
   const strength = getStrength(credentials.password);
+  const match = getMatch(confirmPassword, credentials.password);
   const color = strength === 100 ? "teal" : strength > 50 ? "yellow" : "red";
+
+  const allFieldsFilled =
+    credentials.personalIdentityNumber.trim() !== "" &&
+    credentials.password.trim() !== "" &&
+    confirmPassword.trim() !== "" &&
+    credentials.firstName.trim() !== "" &&
+    credentials.lastName.trim() !== "" &&
+    credentials.email.trim() !== "" &&
+    credentials.address.trim() !== "";
+
+  const isFormValid = allFieldsFilled && strength === 100 && match;
 
   const handleInputChange = (e) => {
     setCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[e.target.name]) {
+      setValidationErrors((prev) => ({ ...prev, [e.target.name]: "" }));
+    }
+  };
+
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPassword(e.target.value);
+    // Clear validation error when user starts typing
+    if (validationErrors.confirmPassword) {
+      setValidationErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!validatePersonalIdentityNumber(credentials.personalIdentityNumber)) {
+      errors.personalIdentityNumber = "Invalid format. Use YYMMDD-XXXX";
+    }
+
+    if (!validateEmail(credentials.email)) {
+      errors.email = "Invalid email address";
+    }
+
+    if (!validateAddress(credentials.address)) {
+      errors.address = "Please provide street, city, and zip code (comma separated)";
+    }
+
+    if (credentials.firstName.trim().length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+    }
+
+    if (credentials.lastName.trim().length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+    }
+
+    if (strength !== 100) {
+      errors.password = "Password does not meet all requirements";
+    }
+
+    if (!match) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleRegistration = async (e) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setError("");
+
+    // Validate form
+    if (!validateForm()) {
+      setError("Please fix the errors below");
+      return;
+    }
 
     try {
       const response = await axios.post(REGISTER_URL, credentials, {
@@ -129,13 +184,12 @@ function Register() {
         navigate("/admin/dashboard", { replace: true });
       } else if (roles.includes("Patient")) {
         navigate("/patient/dashboard", { replace: true });
-      }
-       else if (roles.includes("Caregiver")) {
+      } else if (roles.includes("Caregiver")) {
         navigate("/caregiver/dashboard", { replace: true });
       }
     } catch (error) {
-      console.error("Login failed:", error.response || error);
-      setError("Invalid login details. Please try again.");
+      console.error("Registration failed:", error.response || error);
+      setError(error.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -143,30 +197,200 @@ function Register() {
     <RegisterContainer>
       <Title>Register</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <FormWrapper onSubmit={handleRegistration} aria-label="Login form">
-        <TextInput label="Personal Identity Number" name="personalIdentityNumber" placeholder="YYMMDD-xxxx" required value={credentials.personalIdentityNumber} onChange={handleInputChange} />
-
-        <Popover opened={popoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+      <FormWrapper onSubmit={handleRegistration} aria-label="Register form">
+        <Popover opened={personalIdPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
           <Popover.Target>
-            <div onFocusCapture={() => setPopoverOpened(true)} onBlurCapture={() => setPopoverOpened(false)}>
-              <PasswordInput withAsterisk label="Password" name="password" placeholder="Password..." value={credentials.password} onChange={handleInputChange} />
+            <div onFocusCapture={() => setPersonalIdPopoverOpened(true)} onBlurCapture={() => setPersonalIdPopoverOpened(false)}>
+              <TextInput
+                label="Personal Identity Number"
+                name="personalIdentityNumber"
+                placeholder="YYMMDD-XXXX"
+                required
+                value={credentials.personalIdentityNumber}
+                onChange={handleInputChange}
+                error={validationErrors.personalIdentityNumber}
+              />{" "}
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement
+              label="Valid personal identity number format: YYMMDD-xxxx"
+              meets={validatePersonalIdentityNumber(credentials.personalIdentityNumber) === true}
+            />
+          </Popover.Dropdown>
+        </Popover>
+
+        <Popover opened={passwordPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setPasswordPopoverOpened(true)} onBlurCapture={() => setPasswordPopoverOpened(false)}>
+              <PasswordInput
+                withAsterisk
+                label="Password"
+                name="password"
+                placeholder="Password..."
+                value={credentials.password}
+                onChange={handleInputChange}
+                visible={visible}
+                onVisibilityChange={toggle}
+                error={validationErrors.password}
+              />
             </div>
           </Popover.Target>
           <Popover.Dropdown>
             <Progress color={color} value={strength} size={5} mb="xs" />
-            <PasswordRequirement label="Includes at least 8 characters" meets={credentials.password.length > 7} />
+            <FieldRequirement label="Includes at least 8 characters" meets={credentials.password.length > 7} />
             {checks}
           </Popover.Dropdown>
         </Popover>
-        <TextInput label="First Name" name="firstName" placeholder="Name..." required value={credentials.firstName} onChange={handleInputChange} />
-        <TextInput label="Last Name" name="lastName" placeholder="Name..." required value={credentials.lastName} onChange={handleInputChange} />
-        <TextInput label="Email" name="email" placeholder="example@gmail.com" required value={credentials.email} onChange={handleInputChange} />
-        <TextInput label="Address" name="address" placeholder="street, city, zip" required value={credentials.address} onChange={handleInputChange} />
 
-        <RegisterButton type="submit">Register</RegisterButton>
+        <Popover opened={confirmPasswordPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setConfirmPasswordPopoverOpened(true)} onBlurCapture={() => setConfirmPasswordPopoverOpened(false)}>
+              <PasswordInput
+                withAsterisk
+                label="Confirm Password"
+                placeholder="Password..."
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                visible={visible}
+                onVisibilityChange={toggle}
+                error={validationErrors.confirmPassword}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement label="Passwords match" meets={match} />
+          </Popover.Dropdown>
+        </Popover>
+
+        <Popover opened={firstNamePopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setFirstNamePopoverOpened(true)} onBlurCapture={() => setFirstNamePopoverOpened(false)}>
+              <TextInput
+                label="First Name"
+                name="firstName"
+                placeholder="Name..."
+                required
+                value={credentials.firstName}
+                onChange={handleInputChange}
+                error={validationErrors.firstName}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement label="First name is not empty" meets={validateName(credentials.firstName) === true} />
+          </Popover.Dropdown>
+        </Popover>
+
+        <Popover opened={lastNamePopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setLastNamePopoverOpened(true)} onBlurCapture={() => setLastNamePopoverOpened(false)}>
+              <TextInput
+                label="Last Name"
+                name="lastName"
+                placeholder="Name..."
+                required
+                value={credentials.lastName}
+                onChange={handleInputChange}
+                error={validationErrors.lastName}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement label="Last name is not empty" meets={validateName(credentials.lastName) === true} />
+          </Popover.Dropdown>
+        </Popover>
+
+        <Popover opened={emailPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setEmailPopoverOpened(true)} onBlurCapture={() => setEmailPopoverOpened(false)}>
+              <TextInput
+                label="Email"
+                name="email"
+                type="email"
+                placeholder="example@domain.com"
+                required
+                value={credentials.email}
+                onChange={handleInputChange}
+                error={validationErrors.email}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement label="Valid email address format" meets={validateEmail(credentials.email) === true} />
+          </Popover.Dropdown>
+        </Popover>
+
+        <Popover opened={addressPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
+          <Popover.Target>
+            <div onFocusCapture={() => setAddressPopoverOpened(true)} onBlurCapture={() => setAddressPopoverOpened(false)}>
+              <TextInput
+                label="Address"
+                name="address"
+                placeholder="Street, City, Zip"
+                required
+                value={credentials.address}
+                onChange={handleInputChange}
+                error={validationErrors.address}
+              />
+            </div>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <FieldRequirement label="Valid address format: Street name + number, postal code, and city"  meets={validateAddress(credentials.address) === true} />
+          </Popover.Dropdown>
+        </Popover>
+        <RegisterButton disabled={!isFormValid} type="submit">
+          Register
+        </RegisterButton>
       </FormWrapper>
     </RegisterContainer>
   );
 }
+
+// Validation helper functions
+
+const validatePersonalIdentityNumber = (pin) => {
+  // Swedish format: YYMMDD-XXXX (10 digits total, with dash)
+  const regex = /^\d{6}-\d{4}$/;
+  return regex.test(pin);
+};
+
+function getStrength(password) {
+  let multiplier = password.length > 5 ? 0 : 1;
+
+  requirements.forEach((requirement) => {
+    if (!requirement.re.test(password)) {
+      multiplier += 1;
+    }
+  });
+
+  return Math.max(100 - (100 / (requirements.length + 1)) * multiplier, 10);
+}
+
+function getMatch(confirmPassword, password) {
+  return confirmPassword === password;
+}
+
+const validateName = (name) => {
+  return name.trim().length >= 1;
+};
+
+const validateEmail = (email) => {
+  // Standard email validation
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+};
+
+const validateAddress = (address) => {
+  // Basic validation: street, postal code, and city (comma separated)
+  const parts = address.split(",").map((part) => part.trim());
+
+  return (
+    parts.length >= 3 && // at least street, postal code, city
+    parts.every((part) => part.length > 0) && // no empty parts
+    /^[A-Za-zÅÄÖåäö\s]+ \d+$/.test(parts[0]) && // street name followed by number
+    /^\d{3}\s?\d{2}$/.test(parts[1]) // Swedish postal code
+  );
+};
 
 export default Register;
