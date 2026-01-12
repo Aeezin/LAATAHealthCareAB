@@ -106,19 +106,49 @@ namespace HealthCareAB_v1.Services
         {
             ArgumentNullException.ThrowIfNull(loginDto);
 
-            var user = await _userService.GetUserByUsernameAsync(loginDto.Username);
+            var user = await _userManager.FindByNameAsync(loginDto.Username);
 
-            // if (user == null || !_userService.VerifyPassword(loginDto.Password, user.PasswordHash))
-            // {
-            //     return (
-            //         new AuthResponseDto
-            //         {
-            //             Success = false,
-            //             Message = "Invalid username or password",
-            //         },
-            //         null
-            //     );
-            // }
+            if (user == null)
+            {
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                loginDto.Password,
+                isPersistent: false,
+                lockoutOnFailure: true
+            );
+            if (result.Succeeded == false)
+            {
+                if (result.IsLockedOut == true)
+                {
+                    return (
+                        new AuthResponseDto
+                        {
+                            IsLockedOut = true,
+                            Success = false,
+                            Message = "Account Locked",
+                        },
+                        null
+                    );
+                }
+                return (
+                    new AuthResponseDto
+                    {
+                        IsLockedOut = true,
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
 
             var token = await _jwtTokenService.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);

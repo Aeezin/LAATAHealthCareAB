@@ -67,7 +67,7 @@ namespace HealthCareAB_v1.Controllers
                 new
                 {
                     message = result.Message,
-                    username = result.Username,
+                    loggedInUser = result.Username,
                     roles = result.Roles,
                 }
             );
