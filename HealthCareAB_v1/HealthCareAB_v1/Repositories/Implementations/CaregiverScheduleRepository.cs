@@ -19,6 +19,21 @@ public class CaregiverScheduleRepository : ICaregiverScheduleRepository
         return schedule;
     }
 
+    public async Task<CaregiverSchedule?> GetByIdAsync(int id)
+    {
+        return await _context.CaregiverSchedules
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
+
+    public async Task<List<CaregiverSchedule>> GetByCaregiverIdAsync(int caregiverId)
+    {
+        return await _context.CaregiverSchedules
+            .Where(s => s.CaregiverId == caregiverId && s.IsActive)
+            .OrderBy(s => s.DayOfWeek)
+            .ThenBy(s => s.StartTime)
+            .ToListAsync();
+    }
+
     public async Task<bool> HasOverlappingScheduleAsync(int caregiverId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime)
     {
         return await _context.CaregiverSchedules
