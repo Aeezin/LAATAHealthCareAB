@@ -8,31 +8,36 @@ namespace HealthCareAB_v1.Services.Implementations;
 public class CaregiverScheduleService : ICaregiverScheduleService
 {
     private readonly ICaregiverScheduleRepository _caregiverScheduleRepository;
-    // private readonly ICaregiverRepository _caregiverRepository; add to constructor as well
+    private readonly ICaregiverRepository _caregiverRepository;
 
-    public CaregiverScheduleService(ICaregiverScheduleRepository caregiverScheduleRepository)
+    public CaregiverScheduleService(ICaregiverScheduleRepository caregiverScheduleRepository, ICaregiverRepository caregiverRepository)
     {
         _caregiverScheduleRepository = caregiverScheduleRepository;
-        // _caregiverRepository = caregiverRepository;
+        _caregiverRepository = caregiverRepository;
     }
 
     public async Task<CaregiverSchedule> CreateAsync(CaregiverSchedule schedule)
     {
         // Validation 1: Check if Caregiver Exists
-        /*
         bool caregiverExists = await _caregiverRepository.ExistsAsync(schedule.CaregiverId);
-            if (!caregiverExists)
-            {
-                throw new CaregiverScheduleNotFoundException($"Caregiver with ID {schedule.CaregiverId} not found");
-            }
-        */
+        if (!caregiverExists)
+        {
+            throw new CaregiverScheduleNotFoundException($"Caregiver with ID {schedule.CaregiverId} not found.");
+        }
 
-        // Valdation 2: StartTime < EndTime
+        // Validation 2: Weekday only (Monday-Friday)
+        if (schedule.DayOfWeek < DayOfWeek.Monday || schedule.DayOfWeek > DayOfWeek.Friday)
+        {
+            throw new CaregiverScheduleValidationException("Schedules can only be created for weekdays (Monday-Friday).");
+        }
+
+        // Valdation 3: StartTime < EndTime
         if (schedule.StartTime >= schedule.EndTime)
         {
             throw new CaregiverScheduleValidationException("StartTime must be before EndTime.");
         }
 
+        // Validation 4: No overlaps
         bool hasOverlap = await _caregiverScheduleRepository.HasOverlappingScheduleAsync(schedule.CaregiverId, schedule.DayOfWeek, schedule.StartTime, schedule.EndTime);
 
         if (hasOverlap)

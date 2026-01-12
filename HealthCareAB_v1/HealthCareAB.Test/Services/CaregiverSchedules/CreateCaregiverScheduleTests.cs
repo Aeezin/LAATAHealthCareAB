@@ -1,3 +1,10 @@
+using HealthCareAB_v1.Services.Implementations;
+using HealthCareAB_v1.Repositories.Interfaces;
+using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Exceptions;
+using Xunit;
+using Moq;
+
 namespace HealthCareAB_v1.Tests.Services;
 
 public class CreateCaregiverScheduleServiceTests
@@ -11,10 +18,10 @@ public class CreateCaregiverScheduleServiceTests
         _mockScheduleRepository = new Mock<ICaregiverScheduleRepository>();
         _mockCaregiverRepository = new Mock<ICaregiverRepository>();
 
-        // For now, pass null for caregiver repository since it's not used yet
-        // Change this to: new CaregiverScheduleService(_mockScheduleRepository.Object, _mockCaregiverRepository.Object)
-        // when you uncomment the caregiver validation in the service
-        _service = new CaregiverScheduleService(_mockScheduleRepository.Object);
+        _service = new CaregiverScheduleService(
+            _mockScheduleRepository.Object,
+            _mockCaregiverRepository.Object
+        );
     }
 
     // POSITIVE VALIDATION TESTS
@@ -41,11 +48,18 @@ public class CreateCaregiverScheduleServiceTests
             IsActive = true
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
                 new TimeOnly(8, 0), new TimeOnly(12, 0)))
             .ReturnsAsync(false);
 
+        // Mock: Create returns expected schedule
         _mockScheduleRepository
             .Setup(repo => repo.CreateAsync(It.IsAny<CaregiverSchedule>()))
             .ReturnsAsync(expectedSchedule);
@@ -68,11 +82,10 @@ public class CreateCaregiverScheduleServiceTests
     [Fact]
     public async Task CreateAsync_WithInvalidCaregiverId_ThrowsNotFoundException()
     {
-        // NOTE: This test is for future implementation when caregiver validation is uncommented
         // Arrange
         var schedule = new CaregiverSchedule
         {
-            CaregiverId = 999,  // Non-existent caregiver
+            CaregiverId = 999,
             DayOfWeek = DayOfWeek.Monday,
             StartTime = new TimeOnly(8, 0),
             EndTime = new TimeOnly(12, 0)
@@ -95,6 +108,58 @@ public class CreateCaregiverScheduleServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithWeekendDay_ThrowsValidationException()
+    {
+        // Arrange - Saturday
+        var schedule = new CaregiverSchedule
+        {
+            CaregiverId = 1,
+            DayOfWeek = DayOfWeek.Saturday,
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(12, 0)
+        };
+
+        // Mock: Caregiver exists (validation runs before weekday check)
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<CaregiverScheduleValidationException>(
+            () => _service.CreateAsync(schedule)
+        );
+
+        Assert.Equal("Schedules can only be created for weekdays (Monday-Friday).", exception.Message);
+
+        _mockScheduleRepository.Verify(repo => repo.CreateAsync(It.IsAny<CaregiverSchedule>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithSunday_ThrowsValidationException()
+    {
+        // Arrange - Sunday
+        var schedule = new CaregiverSchedule
+        {
+            CaregiverId = 1,
+            DayOfWeek = DayOfWeek.Sunday,
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(12, 0)
+        };
+
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<CaregiverScheduleValidationException>(
+            () => _service.CreateAsync(schedule)
+        );
+
+        Assert.Equal("Schedules can only be created for weekdays (Monday-Friday).", exception.Message);
+    }
+
+    [Fact]
     public async Task CreateAsync_WithStartTimeAfterEndTime_ThrowsValidationException()
     {
         // Arrange
@@ -105,6 +170,11 @@ public class CreateCaregiverScheduleServiceTests
             StartTime = new TimeOnly(12, 0),
             EndTime = new TimeOnly(8, 0)
         };
+
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<CaregiverScheduleValidationException>(
@@ -128,6 +198,11 @@ public class CreateCaregiverScheduleServiceTests
             EndTime = new TimeOnly(8, 0)
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
         // Act & Assert
         var exception = await Assert.ThrowsAsync<CaregiverScheduleValidationException>(
             () => _service.CreateAsync(schedule)
@@ -148,6 +223,12 @@ public class CreateCaregiverScheduleServiceTests
             EndTime = new TimeOnly(14, 0)
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Mock: Overlap exists
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
                 new TimeOnly(10, 0), new TimeOnly(14, 0)))
@@ -187,6 +268,12 @@ public class CreateCaregiverScheduleServiceTests
             IsActive = true
         };
 
+        // Mock: Caregiver 2 exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(2))
+            .ReturnsAsync(true);
+
+        // Mock: No overlap for caregiver 2
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(2, DayOfWeek.Monday,
                 new TimeOnly(8, 0), new TimeOnly(12, 0)))
@@ -227,6 +314,12 @@ public class CreateCaregiverScheduleServiceTests
             IsActive = true
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
                 new TimeOnly(13, 0), new TimeOnly(17, 0)))
@@ -267,6 +360,12 @@ public class CreateCaregiverScheduleServiceTests
             IsActive = true
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Tuesday,
                 new TimeOnly(8, 0), new TimeOnly(12, 0)))
@@ -299,6 +398,12 @@ public class CreateCaregiverScheduleServiceTests
             EndTime = new TimeOnly(12, 0)
         };
 
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
+
+        // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(It.IsAny<int>(), It.IsAny<DayOfWeek>(),
                 It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
@@ -333,6 +438,11 @@ public class CreateCaregiverScheduleServiceTests
         };
 
         var callOrder = new List<string>();
+
+        // Mock: Caregiver exists
+        _mockCaregiverRepository
+            .Setup(repo => repo.ExistsAsync(1))
+            .ReturnsAsync(true);
 
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(It.IsAny<int>(), It.IsAny<DayOfWeek>(),
