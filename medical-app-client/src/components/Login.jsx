@@ -3,49 +3,39 @@ import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Button, PasswordInput, TextInput } from "@mantine/core";
+import { PasswordInput, TextInput, Group, Stack } from "@mantine/core";
+import { useSearchParams } from "react-router-dom";
+import PrimaryButton from "./PrimaryButton";
+import AuthForm from "./AuthForm";
 
 // API endpoint for login
-const LOGIN_URL = "http://localhost:5256/api/Auth/login";
+const LOGIN_URL_PATIENT = "http://localhost:5256/api/Patients/login";
+const LOGIN_URL_CAREGIVER = "http://localhost:5256/api/Caregivers/login";
 
 // Styled components for login page layout
-const LoginContainer = styled.div`
-  display: flex;
+const LoginContainer = styled(Stack)`
+  height: 100vh;
   align-items: center;
-  justify-content: center;
-  flex-direction: column;
 `;
 
-const LoginButton = styled(Button)`
-  margin-top: 40px;
-`;
 
 const Title = styled.h2`
   font-size: 22px;
-`;
-
-const FormWrapper = styled.form`
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  width: 350px;
-  gap: 10px;
 `;
 
 const UserType = {
   PATIENT: "patient",
   CAREGIVER: "caregiver",
   ADMIN: "admin",
-}
+};
 
-function Login(userType) {
+function Login() {
+  const [searchParams] = useSearchParams();
+  const userType = searchParams.get("type");
   const { setAuthState } = useAuth();
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
-    username: "",
+    identifier: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -58,6 +48,16 @@ function Login(userType) {
     e.preventDefault();
 
     try {
+      var LOGIN_URL = "";
+      if (userType === UserType.ADMIN) {
+        // LOGIN_URL = "";
+        throw new Error("Admin login not implemented yet");
+      }
+      if (userType === UserType.PATIENT) {
+        LOGIN_URL = LOGIN_URL_PATIENT;
+      } else if (userType === UserType.CAREGIVER) {
+        LOGIN_URL = LOGIN_URL_CAREGIVER;
+      }
       const response = await axios.post(LOGIN_URL, credentials, {
         // withCredentials: true is required for the server to set HTTP-only cookies
         // This is essential for cookie-based authentication
@@ -77,9 +77,12 @@ function Login(userType) {
 
       // Redirect based on user role
       if (roles.includes("Admin")) {
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        navigate("/user/dashboard", { replace: true });
+        // navigate("/admin/dashboard", { replace: true });
+        throw new Error("Admin login not implemented yet");
+      } else if (roles.includes("Patient")) {
+        navigate("/patient/dashboard", { replace: true });
+      } else if (roles.includes("Caregiver")) {
+        navigate("/caregiver/dashboard", { replace: true });
       }
     } catch (error) {
       console.error("Login failed:", error.response || error);
@@ -87,42 +90,43 @@ function Login(userType) {
     }
   };
 
-  return userType === UserType.PATIENT? (
+  return userType === UserType.PATIENT ? (
     <LoginContainer>
-      <Title>Login</Title>
+      <Title>Patient Login</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
-        <TextInput label="Personal Identity Number" onChange={handleInputChange}></TextInput>
+      <AuthForm onSubmit={handleLogin} aria-label="Login form">
+        <TextInput label="Personal Identity Number" name="identfier" onChange={handleInputChange}></TextInput>
         <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
-        <LoginButton type="submit">Login</LoginButton>
-      </FormWrapper>
+        <Group justify="space-between">
+          
+          <PrimaryButton type="button" $variant="secondary" onClick={() => navigate("/register?type=patient")}>Register</PrimaryButton>
+          <PrimaryButton type="submit" $variant="submit">Login</PrimaryButton>
+        </Group>
+      </AuthForm>
     </LoginContainer>
   ) : userType === UserType.CAREGIVER ? (
     <LoginContainer>
-      <Title>Login</Title>
+      <Title>Caregiver Login</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
-        <TextInput label="Username" onChange={handleInputChange}></TextInput>
+      <AuthForm onSubmit={handleLogin} aria-label="Login form">
+        <TextInput label="Username" name="identfier" onChange={handleInputChange}></TextInput>
         <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
-        <LoginButton type="submit" >Login</LoginButton>
-      </FormWrapper>
+        <PrimaryButton type="submit" $variant="submit">Login</PrimaryButton>
+      </AuthForm>
     </LoginContainer>
   ) : userType === UserType.ADMIN ? (
     <LoginContainer>
       <Title>Login</Title>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
-        <TextInput label="Username" onChange={handleInputChange}></TextInput>
-        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
-        <LoginButton type="submit">Login</LoginButton>
-      </FormWrapper>
+      <AuthForm aria-label="Login form">
+        <p style={{ color: "red", alignSelf: "center" }}>Admin login not implemented</p>
+      </AuthForm>
     </LoginContainer>
   ) : (
     <LoginContainer>
       <Title>Login</Title>
-      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
+      <AuthForm aria-label="Login form">
         <p style={{ color: "red", alignSelf: "center" }}>User type not detected.</p>
-      </FormWrapper>
+      </AuthForm>
     </LoginContainer>
   );
 }

@@ -44,7 +44,8 @@ const Home = () => (
   <HomeContainer>
     <LogoContainer src={Logo} alt="Health Care Logo" />
     <Title>Health Care Appointment App</Title>
-    <LoginButton to="/login">Login</LoginButton>
+    <LoginButton to="/login?type=patient">Patient Login</LoginButton>
+    <LoginButton to="/login?type=caregiver">Caregiver Login</LoginButton>
   </HomeContainer>
 );
 
