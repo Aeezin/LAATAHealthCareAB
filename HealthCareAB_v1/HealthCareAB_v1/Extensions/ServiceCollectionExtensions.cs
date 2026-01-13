@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using DotNetEnv;
 using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Models.Entities;
@@ -36,6 +37,9 @@ namespace HealthCareAB_v1.Extensions
             IConfiguration configuration
         )
         {
+            // Ensure .env is loaded (needed for 'dotnet ef' commands that don't run Program.cs)
+            Env.Load();
+
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
@@ -74,11 +78,19 @@ namespace HealthCareAB_v1.Extensions
 
                     options.SignIn.RequireConfirmedEmail = false; //Set true if email verification is implemented.
                 })
-                //.AddRoles<IdentityRole>(); If we want to use identity cores role managment.
+                .AddRoles<IdentityRole<int>>()
+                .AddRoleManager<RoleManager<IdentityRole<int>>>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddSignInManager<SignInManager<ApplicationUser>>()
                 .AddDefaultTokenProviders();
 
+            return services;
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<ICaregiverRepository, CaregiverRepository>();
             return services;
         }
 
