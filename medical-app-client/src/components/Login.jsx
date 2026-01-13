@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@mantine/core";
 
 // API endpoint for login
 const LOGIN_URL = "http://localhost:5256/api/Auth/login";
@@ -15,25 +16,8 @@ const LoginContainer = styled.div`
   flex-direction: column;
 `;
 
-const LoginButton = styled.button`
-  cursor: pointer;
-  padding: 10px 30px;
-  background-color: #057d7a;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #fff;
+const LoginButton = styled(Button)`
   margin-top: 40px;
-  transition: background-color 0.3s ease, transform 0.2s ease,
-    box-shadow 0.2s ease;
-  text-align: center;
-  border: none;
-
-  &:hover {
-    background-color: #2fadaa;
-    transform: translateY(-3px);
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
-  }
 `;
 
 const Title = styled.h2`
@@ -80,15 +64,11 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        LOGIN_URL,
-        credentials,
-        {
-          // withCredentials: true is required for the server to set HTTP-only cookies
-          // This is essential for cookie-based authentication
-          withCredentials: true,
-        }
-      );
+      const response = await axios.post(LOGIN_URL, credentials, {
+        // withCredentials: true is required for the server to set HTTP-only cookies
+        // This is essential for cookie-based authentication
+        withCredentials: true,
+      });
 
       console.log("Login successful:", JSON.stringify(response.data));
 
@@ -119,23 +99,9 @@ function Login() {
       {error && <p style={{ color: "red" }}>{error}</p>}
       <FormWrapper onSubmit={handleLogin} aria-label="Login form">
         <label htmlFor="username">Username:</label>
-        <StyledInput
-          id="username"
-          name="username"
-          type="text"
-          value={credentials.username}
-          onChange={handleInputChange}
-          required
-        />
+        <StyledInput id="username" name="username" type="text" value={credentials.username} onChange={handleInputChange} required />
         <label htmlFor="password">Password:</label>
-        <StyledInput
-          id="password"
-          name="password"
-          type="password"
-          value={credentials.password}
-          onChange={handleInputChange}
-          required
-        />
+        <StyledInput id="password" name="password" type="password" value={credentials.password} onChange={handleInputChange} required />
         <LoginButton type="submit">Login</LoginButton>
       </FormWrapper>
     </LoginContainer>
