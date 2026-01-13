@@ -27,4 +27,11 @@ public class PatientRepository : IPatientRepository
     {
         return await _context.Patients.FirstOrDefaultAsync(c => c.Id == id);
     }
+
+    public async Task<Patient?> GetByPersonalIdentityNumberAsync(string personalIdentityNumber)
+    {
+        return await _context.Patients.FirstOrDefaultAsync(p =>
+            p.PersonalIdentityNumber == personalIdentityNumber
+        );
+    }
 }
