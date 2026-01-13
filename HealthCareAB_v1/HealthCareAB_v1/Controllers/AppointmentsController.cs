@@ -18,7 +18,7 @@ public class AppointmentsController : ControllerBase
     }
 
     // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
-    [HttpPost("{id}")]
+    [HttpPost]
     public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentRequest req)
     {
         try
@@ -44,13 +44,22 @@ public class AppointmentsController : ControllerBase
                 StartTime = created.StartTime,
                 EndTime = created.EndTime,
                 PatientNotes = created.PatientNotes,
+                CaregiverNotes = created.CaregiverNotes,
                 Status = created.Status
             };
 
+            // Uncomment when GET endpoint has been added:
             // return CreatedAtAction(nameof(GetAppointment),
-            //& new { id = response.Id }, response);
-
+            // new { id = response.Id }, response);
             return Ok(response);
+        }
+        catch (PatientNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (CaregiverNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
         }
         catch (AppointmentNotFoundException ex)
         {
@@ -59,6 +68,14 @@ public class AppointmentsController : ControllerBase
         catch (AppointmentValidationException ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+        catch (AppointmentLimitException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (AppointmentConflictException ex)
+        {
+            return Conflict(new { error = ex.Message });
         }
         catch (Exception)
         {
