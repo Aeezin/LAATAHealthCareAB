@@ -60,4 +60,13 @@ public class CaregiverScheduleRepository : ICaregiverScheduleRepository
             (endTime > s.StartTime && endTime <= s.EndTime) ||          // New end overlaps existing
             (startTime <= s.StartTime && endTime >= s.EndTime));        // New schedule encompasses existing
     }
+
+    public async Task<CaregiverSchedule?> GetScheduleForDayAsync(int caregiverId, DayOfWeek dayOfWeek)
+    {
+        return await _context.CaregiverSchedules
+            .Where(s => s.CaregiverId == caregiverId
+                     && s.DayOfWeek == dayOfWeek
+                     && s.IsActive)
+            .FirstOrDefaultAsync();
+    }
 }
