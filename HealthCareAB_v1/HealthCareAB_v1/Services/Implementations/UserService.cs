@@ -19,17 +19,17 @@ namespace HealthCareAB_v1.Services
         }
 
         /// <inheritdoc />
-        public async Task<bool> ExistsByUsernameAsync(string username)
+        public async Task<bool> ExistsByEmailAsync(string email)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-            return await _context.Users.AnyAsync(u => u.UserName == username);
+            ArgumentException.ThrowIfNullOrWhiteSpace(email);
+            return await _context.Users.AnyAsync(u => u.UserName == email);
         }
 
         /// <inheritdoc />
-        public async Task<ApplicationUser?> GetUserByUsernameAsync(string username)
+        public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
-            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
+            ArgumentException.ThrowIfNullOrWhiteSpace(email);
+            return await _context.Users.FirstOrDefaultAsync(u => u.UserName == email);
         }
 
         /// <inheritdoc />
