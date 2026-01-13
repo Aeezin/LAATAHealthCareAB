@@ -8,6 +8,6 @@ public class PatientResponse
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public string? PhoneNumber { get; set; }
-    public required DateOnly DateOfBirth { get; set; }
+    public required string DateOfBirth { get; set; }
     public required string PersonalIdentityNumber { get; set; }
 }

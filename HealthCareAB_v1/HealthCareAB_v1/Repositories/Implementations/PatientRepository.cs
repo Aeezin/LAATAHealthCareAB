@@ -15,7 +15,6 @@ public class PatientRepository : IPatientRepository
 
     public async Task<bool> ExistsAsync(int id)
     {
-<<<<<<< HEAD
         return await _context.Patients.AnyAsync(c => c.Id == id);
     }
 
@@ -27,15 +26,5 @@ public class PatientRepository : IPatientRepository
     public async Task<Patient?> GetByIdAsync(int id)
     {
         return await _context.Patients.FirstOrDefaultAsync(c => c.Id == id);
-=======
-        return await _context.Patients.AnyAsync(p => p.Id == id);
-    }
-
-    public async Task<Patient?> GetByPersonalIdentityNumberAsync(string personalIdentityNumber)
-    {
-        return await _context.Patients.FirstOrDefaultAsync(p =>
-            p.PersonalIdentityNumber == personalIdentityNumber
-        );
->>>>>>> d9ac91c4ef1d61212b484242f7dcb9b19f967e74
     }
 }
