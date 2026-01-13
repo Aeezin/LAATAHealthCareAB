@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mantine/core";
+import { Button, PasswordInput, TextInput } from "@mantine/core";
 
 // API endpoint for login
 const LOGIN_URL = "http://localhost:5256/api/Auth/login";
@@ -35,19 +35,13 @@ const FormWrapper = styled.form`
   gap: 10px;
 `;
 
-const StyledInput = styled.input`
-  font-size: 16px;
-  border: 1px solid #ddd;
-  background-color: #fafafa;
-  border-radius: 5px;
-  padding: 5px 0px;
+const UserType = {
+  PATIENT: "patient",
+  CAREGIVER: "caregiver",
+  ADMIN: "admin",
+}
 
-  &:focus {
-    outline: none;
-  }
-`;
-
-function Login() {
+function Login(userType) {
   const { setAuthState } = useAuth();
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
@@ -93,16 +87,41 @@ function Login() {
     }
   };
 
-  return (
+  return userType === UserType.PATIENT? (
     <LoginContainer>
       <Title>Login</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <FormWrapper onSubmit={handleLogin} aria-label="Login form">
-        <label htmlFor="username">Username:</label>
-        <StyledInput id="username" name="username" type="text" value={credentials.username} onChange={handleInputChange} required />
-        <label htmlFor="password">Password:</label>
-        <StyledInput id="password" name="password" type="password" value={credentials.password} onChange={handleInputChange} required />
+        <TextInput label="Personal Identity Number" onChange={handleInputChange}></TextInput>
+        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
         <LoginButton type="submit">Login</LoginButton>
+      </FormWrapper>
+    </LoginContainer>
+  ) : userType === UserType.CAREGIVER ? (
+    <LoginContainer>
+      <Title>Login</Title>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
+        <TextInput label="Username" onChange={handleInputChange}></TextInput>
+        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
+        <LoginButton type="submit" >Login</LoginButton>
+      </FormWrapper>
+    </LoginContainer>
+  ) : userType === UserType.ADMIN ? (
+    <LoginContainer>
+      <Title>Login</Title>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
+        <TextInput label="Username" onChange={handleInputChange}></TextInput>
+        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
+        <LoginButton type="submit">Login</LoginButton>
+      </FormWrapper>
+    </LoginContainer>
+  ) : (
+    <LoginContainer>
+      <Title>Login</Title>
+      <FormWrapper onSubmit={handleLogin} aria-label="Login form">
+        <p style={{ color: "red", alignSelf: "center" }}>User type not detected.</p>
       </FormWrapper>
     </LoginContainer>
   );
