@@ -10,4 +10,5 @@ public interface ICaregiverScheduleRepository
     Task<CaregiverSchedule> UpdateAsync(CaregiverSchedule schedule);
 
     Task<bool> HasOverlappingScheduleAsync(int caregiverId, DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime, int? excludeScheduleId = null);
+    Task<CaregiverSchedule?> GetScheduleForDayAsync(int caregiverId, DayOfWeek dayOfWeek);
 }

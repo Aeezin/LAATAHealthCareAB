@@ -8,12 +8,12 @@ namespace HealthCareAB_v1.Services.Implementations;
 
 public class CaregiverScheduleService : ICaregiverScheduleService
 {
-    private readonly ICaregiverScheduleRepository _caregiverScheduleRepository;
+    private readonly ICaregiverScheduleRepository _scheduleRepository;
     private readonly ICaregiverRepository _caregiverRepository;
 
-    public CaregiverScheduleService(ICaregiverScheduleRepository caregiverScheduleRepository, ICaregiverRepository caregiverRepository)
+    public CaregiverScheduleService(ICaregiverScheduleRepository scheduleRepository, ICaregiverRepository caregiverRepository)
     {
-        _caregiverScheduleRepository = caregiverScheduleRepository;
+        _scheduleRepository = scheduleRepository;
         _caregiverRepository = caregiverRepository;
     }
 
@@ -39,19 +39,19 @@ public class CaregiverScheduleService : ICaregiverScheduleService
         }
 
         // Validation 4: No overlaps
-        bool hasOverlap = await _caregiverScheduleRepository.HasOverlappingScheduleAsync(schedule.CaregiverId, schedule.DayOfWeek, schedule.StartTime, schedule.EndTime);
+        bool hasOverlap = await _scheduleRepository.HasOverlappingScheduleAsync(schedule.CaregiverId, schedule.DayOfWeek, schedule.StartTime, schedule.EndTime);
 
         if (hasOverlap)
         {
             throw new CaregiverScheduleValidationException($"Schedule overlaps with an existing schedule for caregiver {schedule.CaregiverId} on {schedule.DayOfWeek}.");
         }
 
-        return await _caregiverScheduleRepository.CreateAsync(schedule);
+        return await _scheduleRepository.CreateAsync(schedule);
     }
 
     public async Task<CaregiverSchedule> GetByIdAsync(int id)
     {
-        var schedule = await _caregiverScheduleRepository.GetByIdAsync(id);
+        var schedule = await _scheduleRepository.GetByIdAsync(id);
 
         if (schedule == null)
         {
@@ -63,7 +63,7 @@ public class CaregiverScheduleService : ICaregiverScheduleService
 
     public async Task<List<CaregiverSchedule>> GetByCaregiverIdAsync(int caregiverId)
     {
-        return await _caregiverScheduleRepository.GetByCaregiverIdAsync(caregiverId);
+        return await _scheduleRepository.GetByCaregiverIdAsync(caregiverId);
     }
 
     public async Task<CaregiverSchedule> UpdateAsync(int id, UpdateCaregiverScheduleRequest req)
@@ -96,7 +96,7 @@ public class CaregiverScheduleService : ICaregiverScheduleService
         // Validation 4: Check for overlaps if day or times are being updated
         if (req.DayOfWeek.HasValue || req.StartTime.HasValue || req.EndTime.HasValue)
         {
-            bool hasOverlap = await _caregiverScheduleRepository.HasOverlappingScheduleAsync(
+            bool hasOverlap = await _scheduleRepository.HasOverlappingScheduleAsync(
                 existingSchedule.CaregiverId,
                 dayOfWeekToValidate,
                 startTimeToValidate,
@@ -131,6 +131,6 @@ public class CaregiverScheduleService : ICaregiverScheduleService
             existingSchedule.IsActive = req.IsActive.Value;
         }
 
-        return await _caregiverScheduleRepository.UpdateAsync(existingSchedule);
+        return await _scheduleRepository.UpdateAsync(existingSchedule);
     }
 }
