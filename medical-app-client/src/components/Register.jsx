@@ -4,9 +4,11 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { IconX, IconCheck } from "@tabler/icons-react";
-import { PasswordInput, Progress, Text, Popover, Box, Stack, TextInput, Button } from "@mantine/core";
+import { PasswordInput, Progress, Text, Popover, Box, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import PropTypes from "prop-types";
+import AuthForm from "./AuthForm";
+import PrimaryButton from "./PrimaryButton";
 
 const REGISTER_URL = "http://localhost:5256/api/Auth/register";
 
@@ -15,23 +17,8 @@ const RegisterContainer = styled(Stack)`
   align-items: center;
 `;
 
-const RegisterButton = styled(Button)`
-  margin-top: 40px;
-`;
-
 const Title = styled.h2`
   font-size: 22px;
-`;
-
-const FormWrapper = styled.form`
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  width: 350px;
-  gap: 10px;
 `;
 
 const requirements = [
@@ -97,8 +84,6 @@ function Register() {
     credentials.lastName.trim() !== "" &&
     credentials.email.trim() !== "";
 
-  const isFormValid = allFieldsFilled && strength === 100 && match && (credentials.phone.length === 0 || isValidSwedishPhoneNumber(credentials.phone));
-
   const handleInputChange = (e) => {
     setCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     // Clear validation error for this field when user starts typing
@@ -150,6 +135,9 @@ function Register() {
     return Object.keys(errors).length === 0;
   };
 
+  const isFormValid =
+    allFieldsFilled && strength === 100 && match && (credentials.phone.length === 0 || isValidSwedishPhoneNumber(credentials.phone)) && validateForm;
+    
   const handleRegistration = async (e) => {
     e.preventDefault();
 
@@ -180,7 +168,8 @@ function Register() {
 
       // Redirect based on user role
       if (roles.includes("Admin")) {
-        navigate("/admin/dashboard", { replace: true });
+        throw new Error("Admin login not implemented yet");
+        // navigate("/admin/dashboard", { replace: true });
       } else if (roles.includes("Patient")) {
         navigate("/patient/dashboard", { replace: true });
       } else if (roles.includes("Caregiver")) {
@@ -194,9 +183,9 @@ function Register() {
 
   return (
     <RegisterContainer>
-      <Title>Register</Title>
+      <Title>Patient Registration</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
-      <FormWrapper onSubmit={handleRegistration} aria-label="Register form">
+      <AuthForm onSubmit={handleRegistration} aria-label="Register form">
         <Popover opened={personalIdPopoverOpened} position="bottom" width="target" transitionProps={{ transition: "pop" }}>
           <Popover.Target>
             <div onFocusCapture={() => setPersonalIdPopoverOpened(true)} onBlurCapture={() => setPersonalIdPopoverOpened(false)}>
@@ -339,10 +328,10 @@ function Register() {
           </Popover.Dropdown>
         </Popover>
 
-        <RegisterButton disabled={!isFormValid} type="submit">
-          Register
-        </RegisterButton>
-      </FormWrapper>
+        <PrimaryButton disabled={!isFormValid} type="submit" $variant="submit">
+          Submit
+        </PrimaryButton>
+      </AuthForm>
     </RegisterContainer>
   );
 }
