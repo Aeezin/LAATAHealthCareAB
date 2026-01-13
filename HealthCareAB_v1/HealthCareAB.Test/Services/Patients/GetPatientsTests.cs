@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
-using Moq;
-using HealthCareAB_v1.Services.Implementations;
-using HealthCareAB_v1.Repositories.Interfaces;
-using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Models.DTOs.Patient;
+using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Repositories.Interfaces;
+using HealthCareAB_v1.Services.Implementations;
+using Moq;
+using Xunit;
 
 namespace HealthCareAB.Test.Services.Patients
 {
@@ -31,26 +31,26 @@ namespace HealthCareAB.Test.Services.Patients
             // Arrange
             var patients = new List<Patient>
             {
-                new Patient 
-                { 
-                    Id = 1, 
-                    FirstName = "John", 
-                    LastName = "Doe", 
-                    UserId = 1, 
-                    DateOfBirth = new DateOnly(1980, 1, 1), 
+                new Patient
+                {
+                    Id = 1,
+                    FirstName = "John",
+                    LastName = "Doe",
+                    UserId = 1,
+                    DateOfBirth = "1980-01-01",
                     PersonalIdentityNumber = "19800101-1234",
-                    PhoneNumber = "1234567890"
+                    PhoneNumber = "1234567890",
                 },
-                new Patient 
-                { 
-                    Id = 2, 
-                    FirstName = "Jane", 
-                    LastName = "Smith", 
-                    UserId = 2, 
-                    DateOfBirth = new DateOnly(1990, 2, 2), 
+                new Patient
+                {
+                    Id = 2,
+                    FirstName = "Jane",
+                    LastName = "Smith",
+                    UserId = 2,
+                    DateOfBirth = "1990-02-02",
                     PersonalIdentityNumber = "19900202-5678",
-                    PhoneNumber = "0987654321"
-                }
+                    PhoneNumber = "0987654321",
+                },
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(patients);
 
@@ -66,14 +66,14 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetPatientById_WithValidId_ReturnsPatient()
         {
             // Arrange
-            var patient = new Patient 
-            { 
-                Id = 1, 
-                FirstName = "John", 
-                LastName = "Doe", 
-                UserId = 1, 
-                DateOfBirth = new DateOnly(1980, 1, 1), 
-                PersonalIdentityNumber = "19800101-1234"
+            var patient = new Patient
+            {
+                Id = 1,
+                FirstName = "John",
+                LastName = "Doe",
+                UserId = 1,
+                DateOfBirth = "1980-01-01",
+                PersonalIdentityNumber = "19800101-1234",
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(patient);
 
@@ -87,22 +87,28 @@ namespace HealthCareAB.Test.Services.Patients
         }
 
         [Fact]
-        public async Task GetPatientById_WithInvalidId_ThrowsPatientValidationException() 
+        public async Task GetPatientById_WithInvalidId_ThrowsPatientValidationException()
         {
             // Act & Assert
-            // Assuming "Invalid Id" here refers to 0 or negative per the negative checks in other tests, 
-            // but explicitly requested as a separate test case. 
+            // Assuming "Invalid Id" here refers to 0 or negative per the negative checks in other tests,
+            // but explicitly requested as a separate test case.
             // The service checks if (id <= 0).
-            await Assert.ThrowsAsync<PatientValidationException>(() => _service.GetPatientByIdAsync(0));
+            await Assert.ThrowsAsync<PatientValidationException>(
+                () => _service.GetPatientByIdAsync(0)
+            );
         }
 
         [Theory]
         [InlineData(-1)]
         [InlineData(-100)]
-        public async Task GetPatientById_WithNegativeId_ThrowsPatientValidationException(int invalidId)
+        public async Task GetPatientById_WithNegativeId_ThrowsPatientValidationException(
+            int invalidId
+        )
         {
             // Act & Assert
-            await Assert.ThrowsAsync<PatientValidationException>(() => _service.GetPatientByIdAsync(invalidId));
+            await Assert.ThrowsAsync<PatientValidationException>(
+                () => _service.GetPatientByIdAsync(invalidId)
+            );
         }
 
         // Business Logic
@@ -111,15 +117,15 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetAllPatients_ReturnsCompleteDataWithAllFields()
         {
             // Arrange
-            var patient = new Patient 
-            { 
-                Id = 1, 
-                FirstName = "John", 
-                LastName = "Doe", 
-                UserId = 1, 
-                DateOfBirth = new DateOnly(1980, 1, 1), 
+            var patient = new Patient
+            {
+                Id = 1,
+                FirstName = "John",
+                LastName = "Doe",
+                UserId = 1,
+                DateOfBirth = "1980-01-01",
                 PersonalIdentityNumber = "19800101-1234",
-                PhoneNumber = "1234567890"
+                PhoneNumber = "1234567890",
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(new List<Patient> { patient });
 
@@ -130,7 +136,7 @@ namespace HealthCareAB.Test.Services.Patients
             Assert.Equal(1, result.Id);
             Assert.Equal("John", result.FirstName);
             Assert.Equal("Doe", result.LastName);
-            Assert.Equal(new DateOnly(1980, 1, 1), result.DateOfBirth);
+            Assert.Equal("1980-01-01", result.DateOfBirth);
             Assert.Equal("19800101-1234", result.PersonalIdentityNumber);
             Assert.Equal("1234567890", result.PhoneNumber);
         }
@@ -139,15 +145,15 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetPatientById_ReturnsCompletePatientData()
         {
             // Arrange
-            var patient = new Patient 
-            { 
-                Id = 10, 
-                FirstName = "Alice", 
-                LastName = "Wonder", 
-                UserId = 10, 
-                DateOfBirth = new DateOnly(2000, 5, 5), 
+            var patient = new Patient
+            {
+                Id = 10,
+                FirstName = "Alice",
+                LastName = "Wonder",
+                UserId = 10,
+                DateOfBirth = "2000-05-05",
                 PersonalIdentityNumber = "20000505-9999",
-                PhoneNumber = "555-5555"
+                PhoneNumber = "555-5555",
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(10)).ReturnsAsync(patient);
 
@@ -168,7 +174,9 @@ namespace HealthCareAB.Test.Services.Patients
             _mockRepo.Setup(repo => repo.GetByIdAsync(999)).ReturnsAsync((Patient?)null);
 
             // Act & Assert
-            await Assert.ThrowsAsync<PatientNotFoundException>(() => _service.GetPatientByIdAsync(999));
+            await Assert.ThrowsAsync<PatientNotFoundException>(
+                () => _service.GetPatientByIdAsync(999)
+            );
         }
 
         [Fact]
@@ -191,16 +199,19 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetAllPatients_WithLargeDataset_ReturnsAllRecords()
         {
             // Arrange
-            var largeList = Enumerable.Range(1, 1000).Select(i => new Patient 
-            { 
-                Id = i, 
-                FirstName = $"Name{i}", 
-                LastName = "Last", 
-                UserId = i, 
-                DateOfBirth = new DateOnly(1990, 1, 1), 
-                PersonalIdentityNumber = $"19900101-{i:0000}" 
-            }).ToList();
-            
+            var largeList = Enumerable
+                .Range(1, 1000)
+                .Select(i => new Patient
+                {
+                    Id = i,
+                    FirstName = $"Name{i}",
+                    LastName = "Last",
+                    UserId = i,
+                    DateOfBirth = "1990-01-01",
+                    PersonalIdentityNumber = $"19900101-{i:0000}",
+                })
+                .ToList();
+
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(largeList);
 
             // Act
@@ -214,14 +225,14 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetPatientById_WithSpecialCharactersInData_ReturnsCorrectData()
         {
             // Arrange
-            var patient = new Patient 
-            { 
-                Id = 5, 
-                FirstName = "José", 
-                LastName = "O'Connor", 
-                UserId = 5, 
-                DateOfBirth = new DateOnly(1985, 12, 12), 
-                PersonalIdentityNumber = "19851212-0000"
+            var patient = new Patient
+            {
+                Id = 5,
+                FirstName = "José",
+                LastName = "O'Connor",
+                UserId = 5,
+                DateOfBirth = "1985-12-12",
+                PersonalIdentityNumber = "19851212-0000",
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(5)).ReturnsAsync(patient);
 
@@ -237,18 +248,22 @@ namespace HealthCareAB.Test.Services.Patients
         public async Task GetPatientById_WithZeroId_ThrowsPatientValidationException()
         {
             // Act & Assert
-            await Assert.ThrowsAsync<PatientValidationException>(() => _service.GetPatientByIdAsync(0));
+            await Assert.ThrowsAsync<PatientValidationException>(
+                () => _service.GetPatientByIdAsync(0)
+            );
         }
 
         [Fact]
         public async Task GetAllPatients_WhenDatabaseConnectionFails_ThrowsDatabaseException()
         {
-             // Arrange
-             _mockRepo.Setup(repo => repo.GetAllAsync()).ThrowsAsync(new Exception("Database connection failed"));
+            // Arrange
+            _mockRepo
+                .Setup(repo => repo.GetAllAsync())
+                .ThrowsAsync(new Exception("Database connection failed"));
 
-             // Act & Assert
-             var ex = await Assert.ThrowsAsync<Exception>(() => _service.GetAllPatientsAsync());
-             Assert.Equal("Database connection failed", ex.Message);
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<Exception>(() => _service.GetAllPatientsAsync());
+            Assert.Equal("Database connection failed", ex.Message);
         }
     }
 }
