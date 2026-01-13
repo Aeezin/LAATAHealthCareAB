@@ -1,5 +1,6 @@
 ﻿using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.DTOs;
+using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Repositories.Interfaces;
@@ -194,12 +195,19 @@ namespace HealthCareAB_v1.Services
             var token = await _jwtTokenService.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
 
+            if (token == null || string.IsNullOrEmpty(token))
+            {
+                throw new JwtTokenGenerationException("Failed to generate JWT token");
+            }
+
             return (
                 new AuthResponseDto
                 {
                     Success = true,
                     Message = "Login successful",
                     Username = user.UserName ?? "",
+                    FirstName = patient.FirstName,
+                    LastName = patient.LastName,
                     Roles = roles.ToList(),
                 },
                 token
@@ -276,12 +284,19 @@ namespace HealthCareAB_v1.Services
             var token = await _jwtTokenService.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
 
+            if (token == null || string.IsNullOrEmpty(token))
+            {
+                throw new JwtTokenGenerationException("Failed to generate JWT token");
+            }
+
             return (
                 new AuthResponseDto
                 {
                     Success = true,
                     Message = "Login successful",
                     Username = user.UserName ?? "",
+                    FirstName = caregiver.FirstName,
+                    LastName = caregiver.LastName,
                     Roles = roles.ToList(),
                 },
                 token
