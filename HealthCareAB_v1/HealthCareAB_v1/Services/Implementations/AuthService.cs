@@ -21,7 +21,7 @@ namespace HealthCareAB_v1.Services
         private readonly JwtSettings _jwtSettings;
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly AppDbContext _dbContext;
+        private readonly IAppDbContext _dbContext;
 
         public AuthService(
             IUserService userService,
@@ -31,7 +31,7 @@ namespace HealthCareAB_v1.Services
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
-            AppDbContext dbContext
+            IAppDbContext dbContext
         )
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -63,7 +63,7 @@ namespace HealthCareAB_v1.Services
                 };
             }
 
-            var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var transaction = await _dbContext.BeginTransactionAsync();
 
             try
             {

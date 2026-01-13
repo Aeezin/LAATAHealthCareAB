@@ -23,11 +23,11 @@ namespace HealthCareAB_v1.DTOs
         public string Email {get; set;} = null!;
 
         [Required(ErrorMessage = "Date of Birth is required")]
-        [RegularExpression(@"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")]
-        public string DateOfBirth {get; set;} = null!;
+        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
+        public string DateOfBirth { get; set; } = null!;
 
         [Required(ErrorMessage ="Correct personal identity number is required")]
-        [RegularExpression(@"^{4}0-9")]
+        [RegularExpression(@"^\d{4}0-9$")]
         public string PersonalIdentityNumber {get; set;} = null!;
 
         [Required(ErrorMessage = "Password is required")]
@@ -38,14 +38,6 @@ namespace HealthCareAB_v1.DTOs
             MinimumLength = 8,
             ErrorMessage = "Password must be at least 8 characters long and have at least 1 capital letter, 1 number and 1 special character")]
         public string Password { get; set; } = null!;
- 
-        [Required(ErrorMessage = "Address is required")]
-        [RegularExpression(
-            @"^\s*[\p{L}\p{M}\s\.'\-]+,\s*\d+[A-Za-zÅÄÖåäö]?,\s*[\p{L}\p{M}\s\.'\-]+,\s*\d{5}\s*$",
-            ErrorMessage = "Format: Gatunamn, Gatunr, Stad, Postnummer (t.ex. Storgatan, 12A, Uppsala, 75320)"
-        )]
-        public string Address { get; set; } = null!;
-
 
         [Required]
         [Compare(nameof(Password), ErrorMessage = "Passwords does not match")]
