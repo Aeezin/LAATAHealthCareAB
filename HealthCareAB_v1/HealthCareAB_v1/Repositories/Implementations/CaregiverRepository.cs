@@ -1,6 +1,4 @@
 using HealthCareAB_v1.Models.Entities;
-using HealthCareAB_v1.Models.Entities;
-using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,5 +26,10 @@ public class CaregiverRepository : ICaregiverRepository
     public async Task<Caregiver?> GetByIdAsync(int id)
     {
         return await _context.Caregivers.FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<Caregiver?> GetByUserIdAsync(int userId)
+    {
+        return await _context.Caregivers.FirstOrDefaultAsync(c => c.UserId == userId);
     }
 }
