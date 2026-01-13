@@ -15,13 +15,13 @@ public class CaregiverService : ICaregiverService
         _caregiverRepository = caregiverRepository;
     }
 
-    public async Task<IEnumerable<CaregiverDto>> GetAllCaregiversAsync()
+    public async Task<IEnumerable<CaregiverResponse>> GetAllCaregiversAsync()
     {
         var caregivers = await _caregiverRepository.GetAllAsync();
         return caregivers.Select(MapToDto);
     }
 
-    public async Task<CaregiverDto> GetCaregiverByIdAsync(int id)
+    public async Task<CaregiverResponse> GetCaregiverByIdAsync(int id)
     {
         // Validate ID
         if (id <= 0)
@@ -40,9 +40,9 @@ public class CaregiverService : ICaregiverService
     }
 
     // Maps Caregiver entity to DTO
-    private static CaregiverDto MapToDto(Caregiver caregiver)
+    private static CaregiverResponse MapToDto(Caregiver caregiver)
     {
-        return new CaregiverDto
+        return new CaregiverResponse
         {
             Id = caregiver.Id,
             FirstName = caregiver.FirstName,

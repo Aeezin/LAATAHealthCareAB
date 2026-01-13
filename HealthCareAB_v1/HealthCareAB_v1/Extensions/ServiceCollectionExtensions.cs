@@ -25,6 +25,8 @@ namespace HealthCareAB_v1.Extensions
 
             services.AddScoped<ICaregiverRepository, CaregiverRepository>();
             services.AddScoped<ICaregiverService, CaregiverService>();
+            services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<IPatientService, PatientService>();
             return services;
         }
 

@@ -1,6 +1,6 @@
 namespace HealthCareAB_v1.Models.DTOs.Caregiver;
 
-public class CaregiverDto
+public class CaregiverResponse
 {
     public int Id { get; set; }
     public required string FirstName { get; set; }
