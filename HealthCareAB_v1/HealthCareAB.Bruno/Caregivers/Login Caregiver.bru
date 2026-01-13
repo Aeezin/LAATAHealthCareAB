@@ -1,0 +1,18 @@
+meta {
+  name: Login Caregiver
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5256/api/Caregiver/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "identifier": "string",
+    "password": "string"
+  }
+}

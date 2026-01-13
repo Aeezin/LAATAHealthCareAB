@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using DotNetEnv;
 using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Models.Entities;
@@ -23,8 +24,9 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IAuthService, AuthService>();
 
-            services.AddScoped<ICaregiverRepository, CaregiverRepository>();
             services.AddScoped<ICaregiverService, CaregiverService>();
+            services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
+
             return services;
         }
 
@@ -33,6 +35,9 @@ namespace HealthCareAB_v1.Extensions
             IConfiguration configuration
         )
         {
+            // Ensure .env is loaded (needed for 'dotnet ef' commands that don't run Program.cs)
+            Env.Load();
+
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
@@ -46,6 +51,45 @@ namespace HealthCareAB_v1.Extensions
                 provider.GetRequiredService<AppDbContext>()
             );
 
+            return services;
+        }
+
+        public static IServiceCollection AddIdentityServices(this IServiceCollection services)
+        {
+            services
+                .AddIdentityCore<ApplicationUser>(options =>
+                {
+                    options.Password.RequireDigit = true;
+                    options.Password.RequiredUniqueChars = 1;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+                    options.Password.RequiredLength = 8;
+
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromHours(1);
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.AllowedForNewUsers = true;
+
+                    options.User.AllowedUserNameCharacters =
+                        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+                    options.User.RequireUniqueEmail = true;
+
+                    options.SignIn.RequireConfirmedEmail = false; //Set true if email verification is implemented.
+                })
+                .AddRoles<IdentityRole<int>>()
+                .AddRoleManager<RoleManager<IdentityRole<int>>>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddSignInManager<SignInManager<ApplicationUser>>()
+                .AddDefaultTokenProviders();
+
+            return services;
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<ICaregiverRepository, CaregiverRepository>();
+            services.AddScoped<ICaregiverScheduleRepository, CaregiverScheduleRepository>();
             return services;
         }
 
