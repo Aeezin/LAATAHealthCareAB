@@ -1,0 +1,20 @@
+meta {
+  name: GetById
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:5256/api/CaregiverSchedules/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
