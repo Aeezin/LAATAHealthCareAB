@@ -1,28 +1,23 @@
-<<<<<<< HEAD
-using HealthCareAB_v1.Exceptions;
-using HealthCareAB_v1.Services.Interfaces;
-=======
-using System.Security.Claims;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.DTOs;
 using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
->>>>>>> d9ac91c4ef1d61212b484242f7dcb9b19f967e74
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareAB_v1.Controllers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("api/[controller]")]
-<<<<<<< HEAD
 public class CaregiversController : ControllerBase
 {
     private readonly ICaregiverService _caregiverService;
+    private readonly IAuthService _authService;
 
-    public CaregiversController(ICaregiverService caregiverService)
+    public CaregiversController(ICaregiverService caregiverService, IAuthService authService)
     {
         _caregiverService = caregiverService;
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
     }
 
     /// <summary>
@@ -59,15 +54,7 @@ public class CaregiversController : ControllerBase
         catch (CaregiverValidationException ex)
         {
             return BadRequest(ex.Message);
-=======
-[Produces("application/json")]
-public class CaregiverController : ControllerBase
-{
-    private readonly IAuthService _authService;
-
-    public CaregiverController(IAuthService authService)
-    {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        }
     }
 
     [HttpPost("login")]
@@ -113,7 +100,6 @@ public class CaregiverController : ControllerBase
         catch (JwtTokenGenerationException ex)
         {
             return StatusCode(500, new { message = ex.Message });
->>>>>>> d9ac91c4ef1d61212b484242f7dcb9b19f967e74
         }
     }
 }

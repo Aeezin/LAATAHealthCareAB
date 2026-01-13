@@ -1,29 +1,23 @@
-<<<<<<< HEAD
-using HealthCareAB_v1.Exceptions;
-using HealthCareAB_v1.Services.Interfaces;
-=======
-using System.Security.Claims;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.DTOs;
 using HealthCareAB_v1.Exceptions;
-using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
->>>>>>> d9ac91c4ef1d61212b484242f7dcb9b19f967e74
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareAB_v1.Controllers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("api/[controller]")]
-<<<<<<< HEAD
 public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
+    private readonly IAuthService _authService;
 
-    public PatientsController(IPatientService patientService)
+    public PatientsController(IPatientService patientService, IAuthService authService)
     {
         _patientService = patientService;
+        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
     }
 
     /// <summary>
@@ -60,15 +54,7 @@ public class PatientsController : ControllerBase
         catch (PatientValidationException ex)
         {
             return BadRequest(ex.Message);
-=======
-[Produces("application/json")]
-public class PatientsController : ControllerBase
-{
-    private readonly IAuthService _authService;
-
-    public PatientsController(IAuthService authService)
-    {
-        _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+        }
     }
 
     [HttpPost("login")]
@@ -114,7 +100,6 @@ public class PatientsController : ControllerBase
         catch (JwtTokenGenerationException ex)
         {
             return StatusCode(500, new { message = ex.Message });
->>>>>>> d9ac91c4ef1d61212b484242f7dcb9b19f967e74
         }
     }
 }
