@@ -26,6 +26,7 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
 
             return services;
         }
@@ -90,6 +91,7 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<ICaregiverRepository, CaregiverRepository>();
             services.AddScoped<ICaregiverScheduleRepository, CaregiverScheduleRepository>();
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
             return services;
         }
 
