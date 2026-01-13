@@ -7,8 +7,8 @@ import { IconX, IconCheck } from "@tabler/icons-react";
 import { PasswordInput, Progress, Text, Popover, Box, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import PropTypes from "prop-types";
-import AuthForm from "./AuthForm";
-import PrimaryButton from "./PrimaryButton";
+import AuthForm from "../components/AuthForm";
+import PrimaryButton from "../components/PrimaryButton";
 
 const REGISTER_URL = "http://localhost:5256/api/Auth/register";
 
@@ -316,7 +316,7 @@ function Register() {
                 label="Phone"
                 name="phone"
                 type="phone"
-                placeholder="example@domain.com"
+                placeholder="+46 70 123 45 67"
                 value={credentials.phone}
                 onChange={handleInputChange}
                 error={validationErrors.phone}

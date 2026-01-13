@@ -5,8 +5,8 @@ import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { PasswordInput, TextInput, Group, Stack } from "@mantine/core";
 import { useSearchParams } from "react-router-dom";
-import PrimaryButton from "./PrimaryButton";
-import AuthForm from "./AuthForm";
+import PrimaryButton from "../components/PrimaryButton";
+import AuthForm from "../components/AuthForm";
 
 // API endpoint for login
 const LOGIN_URL_PATIENT = "http://localhost:5256/api/Patients/login";

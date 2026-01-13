@@ -9,11 +9,26 @@ const GlobalStyle = createGlobalStyle`
     box-sizing: border-box;
     font-family: "Roboto", sans-serif;
     width: 100vw;
-    height: 100vh;
+    height: 100%;
   }
 
   .content {
-  margin: 1rem;
+    margin: 0;
+  }
+    /* Desktop */
+  .content {
+    padding-top: 60px;
+    height: calc(100vh - 60px);
+    padding-bottom: 0;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .content {
+      padding-top: 0;
+      padding-bottom: 150px;
+      // height: calc(100vh - 150px);
+    }
   }
 
   .link {
