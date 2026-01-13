@@ -21,12 +21,12 @@ namespace HealthCareAB_v1.DTOs
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "Date of Birth is required")]
-        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
+        [RegularExpression(@"^\d{4}-\d{2}-\d{2}$", ErrorMessage = "Format must be YYYY-MM-DD")]
         public string DateOfBirth { get; set; } = null!;
 
-        [Required(ErrorMessage ="Correct personal identity number is required")]
-        [RegularExpression(@"^\d{4}0-9$")]
-        public string PersonalIdentityNumber {get; set;} = null!;
+        [Required(ErrorMessage = "Correct personal identity number is required")]
+        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
+        public string PersonalIdentityNumber { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]
         [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$")]
