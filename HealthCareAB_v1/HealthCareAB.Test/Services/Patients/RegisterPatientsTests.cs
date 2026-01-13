@@ -2,22 +2,23 @@ using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.DTOs;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Interfaces;
+using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Services;
 using HealthCareAB_v1.Services.Interfaces;
-using HealthCareAB.Test.Helpers;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Options;
 using Moq;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication;
 
 namespace HealthCareAB.Test.Services
 {
-    public class AuthServiceRegisterTests
+    public class RegisterPatientsTests
     {
-        // Your DTO uses string DateOfBirth
         private RegisterDto ValidDto(string email = "tony@example.com") => new RegisterDto
         {
             Email = email,
@@ -26,23 +27,22 @@ namespace HealthCareAB.Test.Services
             FirstName = "Tony",
             Lastname = "Gullstrand",
             PhoneNumber = "0700000000",
-            DateOfBirth = "1990-01-01", // string
+            DateOfBirth = "1990-01-01",
             PersonalIdentityNumber = "19900101-1234"
         };
 
-        private (Mock<IAppDbContext> dbMock, List<Patient> addedPatients, FakeDbTransaction tx) MockDb()
+        private (Mock<IAppDbContext> dbMock, List<Patient> added, FakeDbTransaction tx) MockDb()
         {
             var dbMock = new Mock<IAppDbContext>();
             var added = new List<Patient>();
             var tx = new FakeDbTransaction();
 
+            // Intercept Patients.Add
             var patientsDbSetMock = new Mock<DbSet<Patient>>();
-            patientsDbSetMock.Setup(s => s.Add(It.IsAny<Patient>()))
-                .Returns<Patient>(p =>
-                {
-                    added.Add(p);
-                    return Mock.Of<EntityEntry<Patient>>();
-                });
+            patientsDbSetMock
+                .Setup(s => s.Add(It.IsAny<Patient>()))
+                .Callback<Patient>(p => added.Add(p))
+                .Returns((EntityEntry<Patient>)null!);
 
             dbMock.SetupGet(d => d.Patients).Returns(patientsDbSetMock.Object);
             dbMock.Setup(d => d.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -51,47 +51,59 @@ namespace HealthCareAB.Test.Services
             return (dbMock, added, tx);
         }
 
-        private AuthService CreateSut(Mock<UserManager<ApplicationUser>> userMgr, IAppDbContext dbContext)
+        private AuthService CreateSut(Mock<UserManager<ApplicationUser>> userManagerMock, IAppDbContext dbContext)
         {
-            // Construct a valid SignInManager mock to avoid the "no parameterless constructor" error
-            var signInMgr = SignInManagerMockHelper.Create(userMgr);
-
-            // Minimal JwtSettings (not used in RegisterAsync)
-            var jwtOptions = Options.Create(new JwtSettings());
-
-            return new AuthService(
-                userService: Mock.Of<IUserService>(),              // not used in RegisterAsync
-                jwtTokenService: Mock.Of<IJwtTokenService>(),      // not used in RegisterAsync
-                userManager: userMgr.Object,
-                signInManager: signInMgr.Object,
-                jwtSettings: jwtOptions,
-                environment: Mock.Of<IWebHostEnvironment>(),
-                httpContextAccessor: Mock.Of<IHttpContextAccessor>(),
-                dbContext: dbContext                                // IAppDbContext injected
+            Mock<SignInManager<ApplicationUser>> signInManagerMock = new Mock<SignInManager<ApplicationUser>>(
+                userManagerMock.Object,
+                Mock.Of<IHttpContextAccessor>(),
+                Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(),
+                Options.Create(new IdentityOptions()),
+                Mock.Of<ILogger<SignInManager<ApplicationUser>>>(),
+                Mock.Of<IAuthenticationSchemeProvider>(),
+                Mock.Of<IUserConfirmation<ApplicationUser>>()
             );
+
+            IOptions<JwtSettings> jwtOptions = Options.Create(new JwtSettings());
+
+            Mock<IPatientRepository> patientRepositoryMock = new Mock<IPatientRepository>();
+            Mock<ICaregiverRepository> caregiverRepositoryMock = new Mock<ICaregiverRepository>();
+
+            AuthService authService = new AuthService(
+                Mock.Of<IUserService>(),
+                Mock.Of<IJwtTokenService>(),
+                userManagerMock.Object,
+                signInManagerMock.Object,
+                jwtOptions,
+                Mock.Of<IWebHostEnvironment>(),
+                Mock.Of<IHttpContextAccessor>(),
+                dbContext,
+                patientRepositoryMock.Object,
+                caregiverRepositoryMock.Object
+            );
+
+            return authService;
         }
 
-        // 1) Positive: success with valid input
+        // 1) Positive: success with valid input 
         [Fact]
         public async Task Register_Succeeds_With_Valid_Input()
         {
             var userMgr = UserManagerMockHelper.Create();
-            userMgr.Setup(m => m.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+            userMgr.Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
+                .ReturnsAsync((ApplicationUser?)null);
             userMgr.Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-                   .ReturnsAsync(IdentityResult.Success)
-                   .Callback<ApplicationUser, string>((u, pwd) =>
-                   {
-                       // IMPORTANT: ApplicationUser uses int Id
-                       u.Id = 123;
-                       // Optional hashing simulation (not strictly needed for this test)
-                       var hasher = new PasswordHasher<ApplicationUser>();
-                       u.PasswordHash = hasher.HashPassword(u, pwd);
-                   });
+                .ReturnsAsync(IdentityResult.Success)
+                .Callback<ApplicationUser, string>((u, pwd) =>
+                {
+                    u.Id = 123;
+                    var hasher = new PasswordHasher<ApplicationUser>();
+                    u.PasswordHash = hasher.HashPassword(u, pwd);
+                });
             userMgr.Setup(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Patient"))
-                   .ReturnsAsync(IdentityResult.Success);
+                .ReturnsAsync(IdentityResult.Success);
 
-            var (db, added, tx) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             var result = await sut.RegisterAsync(dto);
@@ -100,10 +112,11 @@ namespace HealthCareAB.Test.Services
             Assert.Equal("User registered successfully", result.Message);
             Assert.Equal(dto.Email, result.Username);
             Assert.Contains("Patient", result.Roles ?? new List<string>());
+
             Assert.Single(added);
             Assert.True(tx.Committed);
             Assert.False(tx.RolledBack);
-            db.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         // 2) Negative: invalid email
@@ -115,8 +128,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                    .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Invalid email" }));
 
-            var (db, added, tx) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto(email: "bad-email");
             var result = await sut.RegisterAsync(dto);
@@ -126,7 +139,7 @@ namespace HealthCareAB.Test.Services
             Assert.Empty(added);
             Assert.True(tx.RolledBack);
             Assert.False(tx.Committed);
-            db.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         // 3) Negative: passwords mismatch
@@ -138,8 +151,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                    .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Passwords do not match" }));
 
-            var (db, added, tx) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             dto.ConfirmPassword = "DifferentPassword!";
@@ -160,8 +173,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.FindByEmailAsync(It.IsAny<string>()))
                    .ReturnsAsync(new ApplicationUser { Email = "tony@example.com" });
 
-            var (db, added, _) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             var result = await sut.RegisterAsync(dto);
@@ -170,13 +183,12 @@ namespace HealthCareAB.Test.Services
             Assert.Equal("Email is already taken", result.Message);
             Assert.Empty(added);
 
-            // Transaction should not start on this early exit path
-            db.Verify(d => d.BeginTransactionAsync(It.IsAny<CancellationToken>()), Times.Never);
-            db.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            dbMock.Verify(d => d.BeginTransactionAsync(It.IsAny<CancellationToken>()), Times.Never);
+            dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
             userMgr.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
         }
 
-        // 5) Business: patient persisted intent
+        // 5) Positive: patient persisted intent
         [Fact]
         public async Task Register_Persists_Patient_On_Success()
         {
@@ -188,8 +200,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Patient"))
                    .ReturnsAsync(IdentityResult.Success);
 
-            var (db, added, _) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             var result = await sut.RegisterAsync(dto);
@@ -198,7 +210,7 @@ namespace HealthCareAB.Test.Services
             Assert.Single(added);
             Assert.Equal(dto.FirstName, added[0].FirstName);
             Assert.Equal(123, added[0].UserId);
-            db.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         // 6) Business: password hashed and salted
@@ -224,8 +236,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Patient"))
                    .ReturnsAsync(IdentityResult.Success);
 
-            var (db, _, _) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             var result = await sut.RegisterAsync(dto);
@@ -240,7 +252,7 @@ namespace HealthCareAB.Test.Services
             Assert.NotEqual(PasswordVerificationResult.Failed, verification);
         }
 
-        // 7) Business: no patient created when validation fails
+        // 7) Negative: no patient created when validation fails
         [Fact]
         public async Task Register_Does_Not_Create_Patient_When_Validation_Fails()
         {
@@ -249,8 +261,8 @@ namespace HealthCareAB.Test.Services
             userMgr.Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                    .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Password too weak" }));
 
-            var (db, added, tx) = MockDb();
-            var sut = CreateSut(userMgr, db.Object);
+            var (dbMock, added, tx) = MockDb();
+            var sut = CreateSut(userMgr, dbMock.Object);
 
             var dto = ValidDto();
             var result = await sut.RegisterAsync(dto);
@@ -260,7 +272,7 @@ namespace HealthCareAB.Test.Services
             Assert.Empty(added);
             Assert.True(tx.RolledBack);
             Assert.False(tx.Committed);
-            db.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+            dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

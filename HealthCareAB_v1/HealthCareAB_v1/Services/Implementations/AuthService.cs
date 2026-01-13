@@ -22,7 +22,7 @@ namespace HealthCareAB_v1.Services
         private readonly JwtSettings _jwtSettings;
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly AppDbContext _dbContext;
+        private readonly IAppDbContext _dbContext;
         private readonly IPatientRepository _patientRepository;
         private readonly ICaregiverRepository _caregiverRepository;
 
@@ -34,7 +34,7 @@ namespace HealthCareAB_v1.Services
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
             IHttpContextAccessor httpContextAccessor,
-            AppDbContext dbContext,
+            IAppDbContext dbContext,
             IPatientRepository patientRepository,
             ICaregiverRepository caregiverRepository
         )
