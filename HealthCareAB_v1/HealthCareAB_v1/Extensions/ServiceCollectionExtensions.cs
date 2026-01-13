@@ -1,10 +1,12 @@
 ﻿using System.Text;
+using DotNetEnv;
 using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.Constants;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Repositories.Implementations;
 using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services;
+using HealthCareAB_v1.Services.Implementations;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -23,6 +25,8 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
+
             return services;
         }
 
@@ -31,6 +35,9 @@ namespace HealthCareAB_v1.Extensions
             IConfiguration configuration
         )
         {
+            // Ensure .env is loaded (needed for 'dotnet ef' commands that don't run Program.cs)
+            Env.Load();
+
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             );
@@ -75,6 +82,14 @@ namespace HealthCareAB_v1.Extensions
                 .AddSignInManager<SignInManager<ApplicationUser>>()
                 .AddDefaultTokenProviders();
 
+            return services;
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IPatientRepository, PatientRepository>();
+            services.AddScoped<ICaregiverRepository, CaregiverRepository>();
+            services.AddScoped<ICaregiverScheduleRepository, CaregiverScheduleRepository>();
             return services;
         }
 

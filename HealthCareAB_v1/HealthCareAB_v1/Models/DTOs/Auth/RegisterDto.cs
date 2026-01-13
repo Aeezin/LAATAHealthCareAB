@@ -13,14 +13,12 @@ namespace HealthCareAB_v1.DTOs
 
         [Required(ErrorMessage = "Lastname is required")]
         [RegularExpression(@"^[A-Za-zÅÄÖåäö]{2,20}$")]
-        public string Lastname {get; set;} = null!;
+        public string Lastname { get; set; } = null!;
 
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress]
-        [StringLength(
-            50,
-            MinimumLength = 5)]
-        public string Email {get; set;} = null!;
+        [StringLength(50, MinimumLength = 5)]
+        public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "Date of Birth is required")]
         [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
@@ -31,17 +29,17 @@ namespace HealthCareAB_v1.DTOs
         public string PersonalIdentityNumber {get; set;} = null!;
 
         [Required(ErrorMessage = "Password is required")]
-        [RegularExpression(
-            @"^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$")]
+        [RegularExpression(@"^(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$")]
         [StringLength(
             100,
             MinimumLength = 8,
-            ErrorMessage = "Password must be at least 8 characters long and have at least 1 capital letter, 1 number and 1 special character")]
+            ErrorMessage = "Password must be at least 8 characters long and have at least 1 capital letter, 1 number and 1 special character"
+        )]
         public string Password { get; set; } = null!;
 
         [Required]
         [Compare(nameof(Password), ErrorMessage = "Passwords does not match")]
-        public string ConfirmPassword {get; set;} = null!;
+        public string ConfirmPassword { get; set; } = null!;
 
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number is invalid")]
         public string? PhoneNumber { get; set; }
