@@ -25,6 +25,7 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IAuthService, AuthService>();
 
             services.AddScoped<ICaregiverService, CaregiverService>();
+            services.AddScoped<IPatientService, PatientService>();
             services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
 
             return services;
