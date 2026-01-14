@@ -18,6 +18,16 @@ public class CaregiverRepository : ICaregiverRepository
         return await _context.Caregivers.AnyAsync(c => c.Id == id);
     }
 
+    public async Task<IEnumerable<Caregiver>> GetAllAsync()
+    {
+        return await _context.Caregivers.ToListAsync();
+    }
+
+    public async Task<Caregiver?> GetByIdAsync(int id)
+    {
+        return await _context.Caregivers.FirstOrDefaultAsync(c => c.Id == id);
+    }
+
     public async Task<Caregiver?> GetByUserIdAsync(int userId)
     {
         return await _context.Caregivers.FirstOrDefaultAsync(c => c.UserId == userId);
