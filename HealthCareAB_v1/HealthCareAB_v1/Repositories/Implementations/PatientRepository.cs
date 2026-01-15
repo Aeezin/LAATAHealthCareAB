@@ -24,4 +24,9 @@ public class PatientRepository : IPatientRepository
             p.PersonalIdentityNumber == personalIdentityNumber
         );
     }
+
+    public async Task<Patient?> GetByUserIdAsync(int userId)
+    {
+        return await _context.Patients.FirstOrDefaultAsync(c => c.UserId == userId);
+    }
 }
