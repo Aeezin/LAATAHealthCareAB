@@ -13,7 +13,6 @@ import PrimaryButton from "../components/PrimaryButton";
 const REGISTER_URL = "http://localhost:5256/api/Auth/register";
 
 const RegisterContainer = styled(Stack)`
-  height: 100vh;
   align-items: center;
 `;
 
