@@ -3,6 +3,7 @@ using HealthCareAB_v1.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Models.Entities;
+using System.Security.Claims;
 
 namespace HealthCareAB_v1.Controllers;
 
@@ -76,6 +77,47 @@ public class AppointmentsController : ControllerBase
         catch (AppointmentConflictException ex)
         {
             return Conflict(new { error = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "An unknown error occurred.");
+        }
+    }
+
+    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
+    [HttpGet]
+    public async Task<IActionResult> GetAllAppointments()
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        try
+        {
+
+            var appointments = await _appointmentService.GetAppointmentsByUserIdAsync(userId);
+
+            var responses = appointments.Select(a => new AppointmentResponse
+            {
+                Id = a.Id,
+                PatientId = a.PatientId,
+                CaregiverId = a.CaregiverId,
+                Date = a.Date,
+                StartTime = a.StartTime,
+                EndTime = a.EndTime,
+                Status = a.Status,
+                PatientNotes = a.PatientNotes,
+                CaregiverNotes = a.CaregiverNotes,
+
+                CaregiverName = $"{a.Caregiver?.FirstName} {a.Caregiver?.LastName}",
+                CaregiverSpecialisation = a.Caregiver?.Specialisation,
+                Room = a.Caregiver?.Room,
+                PatientName = $"{a.Patient?.FirstName} {a.Patient?.LastName}"
+            }).ToList();
+
+            return Ok(responses);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
         }
         catch (Exception)
         {
