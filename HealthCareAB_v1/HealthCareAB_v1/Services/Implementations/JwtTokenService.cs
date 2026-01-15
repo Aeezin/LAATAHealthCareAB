@@ -36,6 +36,12 @@ namespace HealthCareAB_v1.Services
 
             var roles = await _userManager.GetRolesAsync(user);
 
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? _jwtSettings.Secret;
+            if (string.IsNullOrEmpty(jwtSecret))
+            {
+                throw new InvalidOperationException("JWT_SECRET is not configured");
+            }
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -46,7 +52,7 @@ namespace HealthCareAB_v1.Services
             // Add role claims for authorization
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
