@@ -26,7 +26,6 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Appointment> CreateAsync(Appointment appointment)
     {
-        // PHASE 1: Basic Input Validation
         // Validation: StartTime < EndTime
         if (appointment.StartTime >= appointment.EndTime)
         {
@@ -53,10 +52,35 @@ public class AppointmentService : IAppointmentService
             appointment.StartTime,
             appointment.EndTime);
 
-        // PHASE 5: Create Appointment
         return await _appointmentRepository.CreateAsync(appointment);
     }
 
+    public async Task<List<Appointment>> GetByUserIdAsync(int userId)
+    {
+        // Try to find Patient for this user
+        var patient = await _patientRepository.GetByUserIdAsync(userId);
+
+        if (patient != null)
+        {
+            return await _appointmentRepository
+                .GetByPatientIdAsync(patient.Id);
+        }
+
+        // Try to find Caregiver for this user
+        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
+
+        if (caregiver != null)
+        {
+            return await _appointmentRepository
+                .GetByCaregiverIdAsync(caregiver.Id);
+        }
+
+        throw new NotFoundException("User profile not found");
+    }
+
+
+
+    // -- HELPER METHODS --
     private async Task ValidateEntitiesExistAsync(int patientId, int caregiverId)
     {
         // Validation: Patient exists
