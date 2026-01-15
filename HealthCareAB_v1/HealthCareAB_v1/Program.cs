@@ -10,7 +10,6 @@ builder.Configuration.AddEnvironmentVariables();
 // === ALLT DETTA MÅSTE VARA FÖRE builder.Build() ===
 builder.Services.AddControllers();
 builder.Services.AddDatabase(builder.Configuration);
-builder.Services.AddIdentityServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddRepositories();
