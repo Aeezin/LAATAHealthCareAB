@@ -4,8 +4,7 @@ using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HealthCareAB_v1.Controllers
-{
+namespace HealthCareAB_v1.Controllers;
 
 [ApiController]
 [Produces("application/json")]
@@ -104,4 +103,3 @@ public class PatientsController : ControllerBase
             }
         }
     }
-}
