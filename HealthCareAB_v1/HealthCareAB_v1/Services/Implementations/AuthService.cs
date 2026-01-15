@@ -1,7 +1,9 @@
 ﻿using HealthCareAB_v1.Configuration;
 using HealthCareAB_v1.DTOs;
-using HealthCareAB_v1.Models;
+using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Repositories.Implementations;
+using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -20,6 +22,9 @@ namespace HealthCareAB_v1.Services
         private readonly JwtSettings _jwtSettings;
         private readonly bool _isDevelopment;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAppDbContext _dbContext;
+        private readonly IPatientRepository _patientRepository;
+        private readonly ICaregiverRepository _caregiverRepository;
 
         public AuthService(
             IUserService userService,
@@ -28,7 +33,10 @@ namespace HealthCareAB_v1.Services
             SignInManager<ApplicationUser> signInManager,
             IOptions<JwtSettings> jwtSettings,
             IWebHostEnvironment environment,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IAppDbContext dbContext,
+            IPatientRepository patientRepository,
+            ICaregiverRepository caregiverRepository
         )
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
@@ -42,6 +50,9 @@ namespace HealthCareAB_v1.Services
             _isDevelopment = environment?.IsDevelopment() ?? false;
             _httpContextAccessor =
                 httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+            _patientRepository = patientRepository;
+            _caregiverRepository = caregiverRepository;
         }
 
         /// <inheritdoc />
@@ -49,86 +60,243 @@ namespace HealthCareAB_v1.Services
         {
             ArgumentNullException.ThrowIfNull(registerDto);
 
-            if (await _userService.ExistsByUsernameAsync(registerDto.Username))
+            ApplicationUser? existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            if (existingUser != null)
             {
+                return new AuthResponseDto { Success = false, Message = "Email is already taken" };
+            }
+
+            var transaction = await _dbContext.BeginTransactionAsync();
+
+            try
+            {
+                ApplicationUser user = new ApplicationUser
+                {
+                    UserName = registerDto.Email,
+                    Email = registerDto.Email,
+                };
+
+                IdentityResult createResult = await _userManager.CreateAsync(
+                    user,
+                    registerDto.Password
+                );
+                if (!createResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", createResult.Errors.Select(e => e.Description)),
+                    };
+                }
+
+                IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+                if (!roleResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", roleResult.Errors.Select(e => e.Description)),
+                    };
+                }
+
+                Patient patient = new Patient
+                {
+                    UserId = user.Id,
+                    FirstName = registerDto.FirstName,
+                    LastName = registerDto.Lastname,
+                    PhoneNumber = registerDto.PhoneNumber,
+                    DateOfBirth = registerDto.DateOfBirth,
+                    PersonalIdentityNumber = registerDto.PersonalIdentityNumber,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+
+                _dbContext.Patients.Add(patient);
+                await _dbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
                 return new AuthResponseDto
                 {
-                    Success = false,
-                    Message = "Username is already taken",
+                    Success = true,
+                    Message = "User registered successfully",
+                    Username = user.Email,
+                    Roles = new List<string> { "Patient" },
                 };
             }
-
-            // Determine roles with security check
-            var roles = DetermineUserRoles(registerDto.Roles);
-
-            var user = new ApplicationUser { UserName = registerDto.Username };
-
-            var result = await _userManager.CreateAsync(user, registerDto.Password);
-
-            if (!result.Succeeded)
+            catch
             {
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
-                };
+                await transaction.RollbackAsync();
+                throw;
             }
-
-            await _userManager.AddToRolesAsync(user, roles);
-
-            return new AuthResponseDto
-            {
-                Success = true,
-                Message = "User registered successfully",
-                Username = user.UserName,
-                Roles = roles,
-            };
-        }
-
-        /// <summary>
-        /// Determines the roles for a new user.
-        /// Default role is set to user.
-        /// </summary>
-        private List<string> DetermineUserRoles(List<string>? requestedRoles)
-        {
-            // If no roles requested, default to User
-            if (requestedRoles == null || !requestedRoles.Any())
-            {
-                return new List<string> { Roles.User };
-            }
-
-            // Return requested roles (original behavior)
-            return requestedRoles;
         }
 
         /// <inheritdoc />
-        public async Task<(AuthResponseDto response, string? token)> LoginAsync(LoginDto loginDto)
+        public async Task<(AuthResponseDto response, string? token)> LoginPatientAsync(
+            string personalIdentityNumber,
+            string password
+        )
         {
-            ArgumentNullException.ThrowIfNull(loginDto);
+            ArgumentException.ThrowIfNullOrWhiteSpace(personalIdentityNumber);
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
 
-            var user = await _userService.GetUserByUsernameAsync(loginDto.Username);
+            var patient = await _patientRepository.GetByPersonalIdentityNumberAsync(
+                personalIdentityNumber
+            );
 
-            // if (user == null || !_userService.VerifyPassword(loginDto.Password, user.PasswordHash))
-            // {
-            //     return (
-            //         new AuthResponseDto
-            //         {
-            //             Success = false,
-            //             Message = "Invalid username or password",
-            //         },
-            //         null
-            //     );
-            // }
+            if (patient == null)
+            {
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
+
+            var user = await _userManager.FindByIdAsync(patient.UserId.ToString());
+
+            if (user == null)
+            {
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                password,
+                isPersistent: false,
+                lockoutOnFailure: true
+            );
+
+            if (result.Succeeded == false)
+            {
+                if (result.IsLockedOut)
+                {
+                    return (
+                        new AuthResponseDto
+                        {
+                            IsLockedOut = true,
+                            Success = false,
+                            Message = "Account Locked",
+                        },
+                        null
+                    );
+                }
+
+                return (
+                    new AuthResponseDto { Success = false, Message = "Invalid PIN or password" },
+                    null
+                );
+            }
 
             var token = await _jwtTokenService.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
+
+            if (token == null || string.IsNullOrEmpty(token))
+            {
+                throw new JwtTokenGenerationException("Failed to generate JWT token");
+            }
 
             return (
                 new AuthResponseDto
                 {
                     Success = true,
                     Message = "Login successful",
-                    Username = user.UserName,
+                    Username = user.UserName ?? "",
+                    FirstName = patient.FirstName,
+                    LastName = patient.LastName,
+                    Roles = roles.ToList(),
+                },
+                token
+            );
+        }
+
+        public async Task<(AuthResponseDto response, string? token)> LoginCaregiverAsync(
+            string username,
+            string password
+        )
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+            ArgumentException.ThrowIfNullOrWhiteSpace(password);
+
+            var user = await _userManager.FindByNameAsync(username);
+
+            if (user == null)
+            {
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
+
+            var caregiver = await _caregiverRepository.GetByUserIdAsync(user.Id);
+            if (caregiver == null)
+            {
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                password,
+                isPersistent: false,
+                lockoutOnFailure: true
+            );
+
+            if (result.Succeeded == false)
+            {
+                if (result.IsLockedOut)
+                {
+                    return (
+                        new AuthResponseDto
+                        {
+                            IsLockedOut = true,
+                            Success = false,
+                            Message = "Account Locked",
+                        },
+                        null
+                    );
+                }
+
+                return (
+                    new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid username or password",
+                    },
+                    null
+                );
+            }
+
+            var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            if (token == null || string.IsNullOrEmpty(token))
+            {
+                throw new JwtTokenGenerationException("Failed to generate JWT token");
+            }
+
+            return (
+                new AuthResponseDto
+                {
+                    Success = true,
+                    Message = "Login successful",
+                    Username = user.UserName ?? "",
+                    FirstName = caregiver.FirstName,
+                    LastName = caregiver.LastName,
                     Roles = roles.ToList(),
                 },
                 token

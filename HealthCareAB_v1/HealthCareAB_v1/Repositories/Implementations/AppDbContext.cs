@@ -3,6 +3,7 @@ using HealthCareAB_v1.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HealthCareAB_v1.Repositories.Implementations
 {
@@ -77,5 +78,8 @@ namespace HealthCareAB_v1.Repositories.Implementations
         {
             return base.SaveChangesAsync(cancellationToken);
         }
+
+        public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        => Database.BeginTransactionAsync(cancellationToken);
     }
 }
