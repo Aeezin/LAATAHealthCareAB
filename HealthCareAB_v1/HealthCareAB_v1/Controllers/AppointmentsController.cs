@@ -86,14 +86,14 @@ public class AppointmentsController : ControllerBase
 
     // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAllAppointments()
+    public async Task<IActionResult> GetMyAppointments()
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         try
         {
 
-            var appointments = await _appointmentService.GetAppointmentsByUserIdAsync(userId);
+            var appointments = await _appointmentService.GetByUserIdAsync(userId);
 
             var responses = appointments.Select(a => new AppointmentResponse
             {

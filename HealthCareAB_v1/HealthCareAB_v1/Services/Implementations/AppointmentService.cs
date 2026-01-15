@@ -122,7 +122,7 @@ public class AppointmentService : IAppointmentService
         // FR-2.5.5: Patients can book max 4 times per 30 days
         var thirtyDaysAgo = DateOnly.FromDateTime(now.AddDays(-30));
         int bookingCount = await _appointmentRepository
-            .GetPatientBookingCountInLast30DaysAsync(appointment.PatientId, thirtyDaysAgo);
+            .GetPatientAppointmentCountInLast30DaysAsync(appointment.PatientId, thirtyDaysAgo);
 
         if (bookingCount >= 4)
         {
