@@ -26,19 +26,7 @@ public class AppointmentService : IAppointmentService
 
     public async Task<Appointment> CreateAsync(Appointment appointment)
     {
-        // PHASE 1: Basic Input Validation
-        // Validation: StartTime < EndTime
-        if (appointment.StartTime >= appointment.EndTime)
-        {
-            throw new AppointmentValidationException("StartTime must be before EndTime.");
-        }
-
-        // Validation: Date cannot be in the past
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (appointment.Date < today)
-        {
-            throw new AppointmentValidationException("Cannot book appointments in the past.");
-        }
+        ValidateBasicInput(appointment);
 
         //  Entity Existence Checks
         await ValidateEntitiesExistAsync(appointment.PatientId, appointment.CaregiverId);
@@ -53,20 +41,50 @@ public class AppointmentService : IAppointmentService
             appointment.StartTime,
             appointment.EndTime);
 
-        // PHASE 5: Create Appointment
         return await _appointmentRepository.CreateAsync(appointment);
+    }
+
+    private void ValidateBasicInput(Appointment appointment)
+    {
+        // StartTime < EndTime
+        if (appointment.StartTime >= appointment.EndTime)
+        {
+            throw new AppointmentValidationException("StartTime must be before EndTime.");
+        }
+
+        // Must be exactly 30 minutes
+        var duration = appointment.EndTime.ToTimeSpan() - appointment.StartTime.ToTimeSpan();
+        if (duration != TimeSpan.FromMinutes(30))
+        {
+            throw new AppointmentValidationException(
+                "Appointments must be exactly 30 minutes long.");
+        }
+
+        // Must start on 30-minute boundaries (00 or 30)
+        if (appointment.StartTime.Minute != 0 && appointment.StartTime.Minute != 30)
+        {
+            throw new AppointmentValidationException(
+                "Appointments must start at :00 or :30 (e.g., 10:00, 10:30).");
+        }
+
+        // Date validation
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (appointment.Date < today)
+        {
+            throw new AppointmentValidationException("Cannot book appointments in the past.");
+        }
     }
 
     private async Task ValidateEntitiesExistAsync(int patientId, int caregiverId)
     {
-        // Validation: Patient exists
+        // Patient exists
         bool patientExists = await _patientRepository.ExistsAsync(patientId);
         if (!patientExists)
         {
             throw new PatientNotFoundException($"Patient with ID {patientId} not found.");
         }
 
-        // Validation: Caregiver exists
+        //  Caregiver exists
         bool caregiverExists = await _caregiverRepository.ExistsAsync(caregiverId);
         if (!caregiverExists)
         {
@@ -119,7 +137,7 @@ public class AppointmentService : IAppointmentService
         TimeOnly startTime,
         TimeOnly endTime)
     {
-        // Validation 1: Caregiver has a schedule for this day
+        //  Caregiver has a schedule for this day
         var dayOfWeek = date.DayOfWeek;
         var schedule = await _scheduleRepository.GetScheduleForDayAsync(caregiverId, dayOfWeek);
 
@@ -129,14 +147,14 @@ public class AppointmentService : IAppointmentService
                 $"Caregiver has no schedule available for {dayOfWeek}.");
         }
 
-        // Validation 2: Requested time falls within caregiver's working hours
+        // Requested time falls within caregiver's working hours
         if (startTime < schedule.StartTime || endTime > schedule.EndTime)
         {
             throw new AppointmentValidationException(
                 $"Requested time slot is outside caregiver's working hours ({schedule.StartTime} - {schedule.EndTime}).");
         }
 
-        // Validation 3: No conflicting appointments (NFR-2.5.4)
+        //  No conflicting appointments (NFR-2.5.4)
         bool hasConflict = await _appointmentRepository.HasConflictingAppointmentAsync(
             caregiverId, date, startTime, endTime);
 
