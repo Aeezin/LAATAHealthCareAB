@@ -5,7 +5,20 @@ meta {
 }
 
 post {
-  url: api/Auth/register
-  body: none
-  auth: inherit
+  url: http://localhost:5256/api/Auth/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "example@email.com",
+    "password": "ValidP@ssw0rd!",
+    "confirmPassword": "ValidP@ssw0rd!",
+    "firstName": "Wa",
+    "lastname": "Lee",
+    "phoneNumber": "0700000000",
+    "dateOfBirth": "1990-01-01",
+    "personalIdentityNumber": "19900101-1234"
+  }
 }
