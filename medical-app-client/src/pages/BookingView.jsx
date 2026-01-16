@@ -1,6 +1,6 @@
 import BookingCalendar from "../components/BookingCalendar";
 
-export default function BookingViewPatient() {
+export default function BookingView() {
   return (
     <>
       <BookingCalendar />;

@@ -3,7 +3,6 @@ import { IconHomeFilled, IconUserFilled, IconClockFilled } from "@tabler/icons-r
 import { useMediaQuery } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 
-
 const StyledNavbar = styled.nav`
   width: 100%;
   height: 60px;
@@ -59,7 +58,7 @@ const NavLink = styled(Link)`
 `;
 
 function Navbar() {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
     <StyledNavbar>
@@ -71,11 +70,10 @@ function Navbar() {
         <NavLink to="/profile">
           <IconUserFilled size={28} />
         </NavLink>
-        <NavLink to="/history">
+        <NavLink to="/booking">
           <IconClockFilled size={28} />
         </NavLink>
       </NavIcons>
-
     </StyledNavbar>
   );
 }

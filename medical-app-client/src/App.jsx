@@ -11,7 +11,7 @@ import GlobalStyle from "./styles/GlobalStyle";
 import "@mantine/core/styles.css";
 import Navbar from "./components/Navbar";
 import { Stack } from "@mantine/core";
-import BookingViewPatient from "./pages/BookingViewPatient";
+import BookingView from "./pages/BookingView";
 
 // AuthProvider must wrap Router to ensure auth state is available to all routes
 function App() {
@@ -28,7 +28,7 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* TEMP PUBLIC MOVE TO PROTECTED LATER */}
-          <Route path="/booking-patient" element={<BookingViewPatient />} />
+          <Route path="/booking" element={<BookingView />} />
 
           {/* Protected routes - require authentication and specific roles */}
           <Route
