@@ -7,7 +7,7 @@ namespace HealthCareAB_v1.Services.Interfaces
     {
         Task<AuthResponseDto> RegisterPatientAsync(RegisterDto registerDto);
 
-        Task<AuthResponseDto>RegisterCaregiverAsync(RegisterCaregiverDto registerCaregiverDto);
+        Task<AuthResponseDto> RegisterCaregiverAsync(RegisterCaregiverDto registerCaregiverDto);
 
         Task<(AuthResponseDto response, string? token)> LoginPatientAsync(
             string personalIdentityNumber,
