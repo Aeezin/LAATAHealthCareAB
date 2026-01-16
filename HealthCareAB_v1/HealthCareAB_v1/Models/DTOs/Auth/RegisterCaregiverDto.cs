@@ -22,7 +22,7 @@ namespace HealthCareAB_v1.DTOs
         public required string Room { get; set; }
 
         [Required(ErrorMessage = "Bio is required")]
-        public string? Bio { get; set; }
+        public string Bio { get; set; } = null!;
 
         public bool Verified { get; set; } = false;
         public bool IsAcceptingPatients { get; set; } = true;
