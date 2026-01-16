@@ -21,17 +21,46 @@ namespace HealthCareAB_v1.Controllers
         }
 
         /// <summary>
-        /// Registers a new user with default User role.
+        /// Registers a new patient with default User role.
         /// </summary>
         [HttpPost("register-patient")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> Register([FromBody] RegisterDto request)
+        public async Task<IActionResult> RegisterPatient([FromBody] RegisterDto request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var result = await _authService.RegisterPatientAsync(request);
+
+            if (!result.Success)
+            {
+                return Conflict(new { message = result.Message });
+            }
+
+            return CreatedAtAction(
+                nameof(CheckAuthentication),
+                new
+                {
+                    message = result.Message,
+                    username = result.Username,
+                    roles = result.Roles,
+                }
+            );
+        }
+
+        /// <summary>
+        /// Registers a new caregiver with default User role.
+        /// </summary>
+        [HttpPost("register-caregiver")]
+        [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> RegisterCaregiver([FromBody] RegisterCaregiverDto request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.RegisterCaregiverAsync(request);
 
             if (!result.Success)
             {

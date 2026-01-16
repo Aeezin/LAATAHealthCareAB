@@ -102,9 +102,7 @@ namespace HealthCareAB_v1.Services
                     };
                 }
 
-                string lastFour = PersonalIdentityNumber(
-                    registerDto.PersonalIdentityNumber
-                );
+                string lastFour = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
 
                 Patient patient = new Patient
                 {
@@ -129,6 +127,86 @@ namespace HealthCareAB_v1.Services
                     Message = "User registered successfully",
                     Username = user.Email,
                     Roles = new List<string> { "Patient" },
+                };
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<AuthResponseDto> RegisterCaregiverAsync(
+            RegisterCaregiverDto registerCaregiverDto
+        )
+        {
+            ArgumentNullException.ThrowIfNull(registerCaregiverDto);
+
+            ApplicationUser? existingUser = await _userManager.FindByEmailAsync(
+                registerCaregiverDto.Email
+            );
+            if (existingUser != null)
+            {
+                return new AuthResponseDto { Success = false, Message = "Email is already taken" };
+            }
+
+            var transaction = await _dbContext.BeginTransactionAsync();
+
+            try
+            {
+                ApplicationUser user = new ApplicationUser
+                {
+                    UserName = registerCaregiverDto.Email,
+                    Email = registerCaregiverDto.Email,
+                };
+
+                IdentityResult createResult = await _userManager.CreateAsync(
+                    user,
+                    registerCaregiverDto.Password
+                );
+                if (!createResult.Succeeded)
+                {
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", createResult.Errors.Select(e => e.Description)),
+                    };
+                }
+
+                IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "Caregiver");
+                if (!roleResult.Succeeded)
+                {
+                    await _userManager.DeleteAsync(user);
+                    await transaction.RollbackAsync();
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = string.Join(", ", roleResult.Errors.Select(e => e.Description)),
+                    };
+                }
+
+                Caregiver caregiver = new Caregiver
+                {
+                    UserId = user.Id,
+                    FirstName = registerCaregiverDto.FirstName,
+                    LastName = registerCaregiverDto.LastName,
+                    Specialisation = registerCaregiverDto.Specialisation,
+                    Bio = registerCaregiverDto.Bio,
+                    Room = registerCaregiverDto.Room,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                };
+
+                await _caregiverRepository.SaveAsync(caregiver);
+                await transaction.CommitAsync();
+
+                return new AuthResponseDto
+                {
+                    Success = true,
+                    Message = "User registered successfully",
+                    Username = user.Email,
+                    Roles = new List<string> { "Caregiver" },
                 };
             }
             catch
@@ -336,7 +414,7 @@ namespace HealthCareAB_v1.Services
 
         private string PersonalIdentityNumber(string personalIdentityNumber)
         {
-            if(personalIdentityNumber.Contains("-"))
+            if (personalIdentityNumber.Contains("-"))
             {
                 return personalIdentityNumber.Split('-')[1];
             }
