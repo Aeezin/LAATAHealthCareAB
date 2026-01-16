@@ -83,10 +83,11 @@ namespace HealthCareAB_v1.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> Login([FromBody] LoginDto request)
+        public async Task<IActionResult> LoginPatient([FromBody] LoginDto request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             try
             {
                 var (result, token) = await _authService.LoginPatientAsync(
@@ -94,29 +95,7 @@ namespace HealthCareAB_v1.Controllers
                     request.Password
                 );
 
-                if (!result.Success || string.IsNullOrEmpty(token))
-                {
-                    if (result.IsLockedOut)
-                    {
-                        return StatusCode(
-                            StatusCodes.Status403Forbidden,
-                            new { message = result.Message }
-                        );
-                    }
-                    return Unauthorized(new { message = result.Message });
-                }
-
-                var cookieOptions = _authService.GetJwtCookieOptions();
-                HttpContext.Response.Cookies.Append(CookieNames.Jwt, token, cookieOptions);
-
-                return Ok(
-                    new
-                    {
-                        message = result.Message,
-                        loggedInUser = $"{result.FirstName} {result.LastName}",
-                        roles = result.Roles,
-                    }
-                );
+                return HandleLoginResult(result, token);
             }
             catch (JwtTokenGenerationException ex)
             {
@@ -133,6 +112,7 @@ namespace HealthCareAB_v1.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             try
             {
                 var (result, token) = await _authService.LoginCaregiverAsync(
@@ -140,29 +120,7 @@ namespace HealthCareAB_v1.Controllers
                     request.Password
                 );
 
-                if (!result.Success || string.IsNullOrEmpty(token))
-                {
-                    if (result.IsLockedOut)
-                    {
-                        return StatusCode(
-                            StatusCodes.Status403Forbidden,
-                            new { message = result.Message }
-                        );
-                    }
-                    return Unauthorized(new { message = result.Message });
-                }
-
-                var cookieOptions = _authService.GetJwtCookieOptions();
-                HttpContext.Response.Cookies.Append(CookieNames.Jwt, token, cookieOptions);
-
-                return Ok(
-                    new
-                    {
-                        message = result.Message,
-                        loggedInUser = $"{result.FirstName} {result.LastName}",
-                        roles = result.Roles,
-                    }
-                );
+                return HandleLoginResult(result, token);
             }
             catch (JwtTokenGenerationException ex)
             {
@@ -209,6 +167,33 @@ namespace HealthCareAB_v1.Controllers
                     message = "Authenticated",
                     username,
                     roles,
+                }
+            );
+        }
+
+        private IActionResult HandleLoginResult(AuthResponseDto result, string? token)
+        {
+            if (!result.Success || string.IsNullOrEmpty(token))
+            {
+                if (result.IsLockedOut)
+                {
+                    return StatusCode(
+                        StatusCodes.Status403Forbidden,
+                        new { message = result.Message }
+                    );
+                }
+                return Unauthorized(new { message = result.Message });
+            }
+
+            var cookieOptions = _authService.GetJwtCookieOptions();
+            HttpContext.Response.Cookies.Append(CookieNames.Jwt, token, cookieOptions);
+
+            return Ok(
+                new
+                {
+                    message = result.Message,
+                    loggedInUser = $"{result.FirstName} {result.LastName}",
+                    roles = result.Roles,
                 }
             );
         }
