@@ -3,27 +3,15 @@ import PropTypes from "prop-types";
 import BookingSlot from "./BookingSlot";
 import BookingActionsModal from "./BookingActionsModal";
 
-function BookingCalendarSection({
-  role,
-  booking,
-  isOwnBooking = false,
-  onBook,
-  onEdit,
-  onDelete,
-}) {
+export default function BookingCalendarSection({ booking, role, onBook, onEdit, onDelete }) {
   const [open, setOpen] = useState(false);
-
-  const title =
-    role === "caregiver" && booking.booked
-      ? `Patient: ${booking.patientName}`
-      : `Caregiver: ${booking.caregiverName}`;
 
   return (
     <>
       <BookingSlot
-        booked={booking.booked}
-        title={title}
-        time={booking.time}
+        title={`Caregiver: ${booking.caregiverName}`}
+        startTime={booking.startTime}
+        endTime={booking.endTime}
         onClick={() => setOpen(true)}
       />
 
@@ -32,7 +20,6 @@ function BookingCalendarSection({
         onClose={() => setOpen(false)}
         role={role}
         booking={booking}
-        isOwnBooking={isOwnBooking}
         onBook={onBook}
         onEdit={onEdit}
         onDelete={onDelete}
@@ -42,18 +29,15 @@ function BookingCalendarSection({
 }
 
 BookingCalendarSection.propTypes = {
-  role: PropTypes.oneOf(["patient", "caregiver"]).isRequired,
   booking: PropTypes.shape({
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    time: PropTypes.string.isRequired,
-    patientName: PropTypes.string,
-    caregiverName: PropTypes.string,
-    booked: PropTypes.bool.isRequired,
+    startTime: PropTypes.string.isRequired,
+    endTime: PropTypes.string.isRequired,
+    caregiverName: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
   }).isRequired,
-  isOwnBooking: PropTypes.bool,
+  role: PropTypes.oneOf(["patient", "caregiver"]).isRequired,
   onBook: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
 };
-
-export default BookingCalendarSection;

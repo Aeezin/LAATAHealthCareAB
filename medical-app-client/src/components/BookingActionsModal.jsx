@@ -1,43 +1,33 @@
-import { Modal, Button, Stack, Group, Text } from "@mantine/core";
+import { Modal, Stack, Button, Group, Text } from "@mantine/core";
 import PropTypes from "prop-types";
-import { getBookingPermissions } from "./bookingPermissions";
+import { getBookingPermissions } from "../utils/bookingPermissions";
 
-function BookingActionsModal({
-  opened,
-  onClose,
-  role,
-  booking,
-  isOwnBooking,
-  onBook,
-  onEdit,
-  onDelete,
-}) {
-  const permissions = getBookingPermissions({
-    booked: booking.booked,
-    role,
-    isOwnBooking,
-  });
+function BookingActionsModal({ opened, onClose, role, booking, onBook, onEdit, onDelete }) {
+  const permissions = getBookingPermissions({ booked: booking.booked, role });
+
+  // Compute time string from start/end
+  const time = `${booking.startTime} - ${booking.endTime}`;
+
+  // Title changes depending on role
+  const title =
+    booking.booked && role === "caregiver"
+      ? `Patient: ${booking.patientName || "Unknown"}`
+      : `Caregiver: ${booking.caregiverName}`;
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Booking details" centered>
+    <Modal opened={opened} onClose={onClose} title="Booking Details" centered>
       <Stack gap="md">
-        {booking.patientName && <Text>Patient: {booking.patientName}</Text>}
-        {booking.caregiverName && (
-          <Text>Caregiver: {booking.caregiverName}</Text>
-        )}
-        <Text>Time: {booking.time}</Text>
-
+        <Text>{title}</Text>
+        <Text>Date: {booking.date}</Text>
+        <Text>Time: {time}</Text>
         {permissions.canBook && (
           <Button color="green" onClick={() => onBook?.(booking)}>
             Book
           </Button>
         )}
-
         {(permissions.canEdit || permissions.canDelete) && (
           <Group grow>
-            {permissions.canEdit && (
-              <Button onClick={() => onEdit?.(booking)}>Edit</Button>
-            )}
+            {permissions.canEdit && <Button onClick={() => onEdit?.(booking)}>Edit</Button>}
             {permissions.canDelete && (
               <Button
                 color="red"
@@ -52,10 +42,6 @@ function BookingActionsModal({
             )}
           </Group>
         )}
-
-        {permissions.isReadOnly && (
-          <Text c="dimmed">This slot is already booked</Text>
-        )}
       </Stack>
     </Modal>
   );
@@ -67,12 +53,13 @@ BookingActionsModal.propTypes = {
   role: PropTypes.oneOf(["patient", "caregiver"]).isRequired,
   booking: PropTypes.shape({
     bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    time: PropTypes.string.isRequired,
+    startTime: PropTypes.string.isRequired,
+    endTime: PropTypes.string.isRequired,
+    caregiverName: PropTypes.string.isRequired,
     patientName: PropTypes.string,
-    caregiverName: PropTypes.string,
-    booked: PropTypes.bool.isRequired,
+    booked: PropTypes.bool,
+    date: PropTypes.string.isRequired,
   }).isRequired,
-  isOwnBooking: PropTypes.bool,
   onBook: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
