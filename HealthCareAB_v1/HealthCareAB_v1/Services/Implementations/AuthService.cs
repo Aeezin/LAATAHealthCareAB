@@ -56,7 +56,7 @@ namespace HealthCareAB_v1.Services
         }
 
         /// <inheritdoc />
-        public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
+        public async Task<AuthResponseDto> RegisterPatientAsync(RegisterDto registerDto)
         {
             ArgumentNullException.ThrowIfNull(registerDto);
 
@@ -93,6 +93,7 @@ namespace HealthCareAB_v1.Services
                 IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "Patient");
                 if (!roleResult.Succeeded)
                 {
+                    await _userManager.DeleteAsync(user);
                     await transaction.RollbackAsync();
                     return new AuthResponseDto
                     {
@@ -105,7 +106,7 @@ namespace HealthCareAB_v1.Services
                 {
                     UserId = user.Id,
                     FirstName = registerDto.FirstName,
-                    LastName = registerDto.Lastname,
+                    LastName = registerDto.LastName,
                     PhoneNumber = registerDto.PhoneNumber,
                     DateOfBirth = registerDto.DateOfBirth,
                     PersonalIdentityNumber = registerDto.PersonalIdentityNumber,

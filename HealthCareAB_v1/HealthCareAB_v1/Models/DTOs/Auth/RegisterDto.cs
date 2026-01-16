@@ -13,7 +13,7 @@ namespace HealthCareAB_v1.DTOs
 
         [Required(ErrorMessage = "Lastname is required")]
         [RegularExpression(@"^[A-Za-zÅÄÖåäö]{2,20}$")]
-        public string Lastname { get; set; } = null!;
+        public string LastName { get; set; } = null!;
 
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress]
