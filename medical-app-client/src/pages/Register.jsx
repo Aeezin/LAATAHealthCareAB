@@ -103,7 +103,7 @@ function Register() {
     const errors = {};
 
     if (!validatePersonalIdentityNumber(credentials.personalIdentityNumber)) {
-      errors.personalIdentityNumber = "Invalid format. Use YYMMDD-XXXX";
+      errors.personalIdentityNumber = "Invalid format. Use YYYYMMDD-XXXX";
     }
 
     if (!validateEmail(credentials.email)) {
@@ -191,7 +191,7 @@ function Register() {
               <TextInput
                 label="Personal Identity Number"
                 name="personalIdentityNumber"
-                placeholder="YYMMDD-XXXX"
+                placeholder="YYYYMMDD-XXXX"
                 required
                 value={credentials.personalIdentityNumber}
                 onChange={handleInputChange}
@@ -338,8 +338,8 @@ function Register() {
 // Validation helper functions
 
 const validatePersonalIdentityNumber = (pin) => {
-  // Swedish format: YYMMDD-XXXX (10 digits total, with dash)
-  const regex = /^\d{6}-\d{4}$/;
+  // Swedish format: YYYYMMDD-XXXX (10 digits total, with dash)
+  const regex = /^\d{8}-\d{4}$/;
   return regex.test(pin);
 };
 

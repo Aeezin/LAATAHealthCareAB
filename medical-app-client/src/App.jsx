@@ -10,6 +10,8 @@ import RequireAuth from "./components/RequireAuth";
 import GlobalStyle from "./styles/GlobalStyle";
 import "@mantine/core/styles.css";
 import Navbar from "./components/Navbar";
+import BookingPatient from "./pages/BookingPatient";
+import { Stack } from "@mantine/core";
 
 // AuthProvider must wrap Router to ensure auth state is available to all routes
 function App() {
@@ -17,13 +19,16 @@ function App() {
     <AuthProvider>
       <GlobalStyle />
       <Navbar />
-      <div className="content">
+      <Stack className="content">
         <Routes>
           {/* Public routes - accessible without authentication */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+
+          {/* TEMP PUBLIC MOVE TO PROTECTED LATER */}
+          <Route path="/booking-patient" element={<BookingPatient />} />
 
           {/* Protected routes - require authentication and specific roles */}
           <Route
@@ -46,7 +51,7 @@ function App() {
           {/* Fallback route - redirects unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </div>
+      </Stack>
     </AuthProvider>
   );
 }
