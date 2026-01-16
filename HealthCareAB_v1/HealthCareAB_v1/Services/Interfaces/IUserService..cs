@@ -6,8 +6,8 @@ namespace HealthCareAB_v1.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<bool> ExistsByUsernameAsync(string username);
-        Task<ApplicationUser?> GetUserByUsernameAsync(string username);
+        Task<bool> ExistsByEmailAsync(string email);
+        Task<ApplicationUser?> GetUserByEmailAsync(string email);
         Task CreateUserAsync(ApplicationUser user);
     }
 }
