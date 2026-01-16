@@ -60,7 +60,72 @@ namespace HealthCareAB_v1.Services
         {
             ArgumentNullException.ThrowIfNull(registerDto);
 
-            ApplicationUser? existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
+            return await RegistrationHelper(
+                registerDto.Email,
+                registerDto.Password,
+                "Patient",
+                async (user) =>
+                {
+                    string lastFour = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
+
+                    Patient patient = new Patient
+                    {
+                        UserId = user.Id,
+                        FirstName = registerDto.FirstName,
+                        LastName = registerDto.LastName,
+                        PhoneNumber = registerDto.PhoneNumber,
+                        DateOfBirth = registerDto.DateOfBirth,
+                        PersonalIdentityNumber = lastFour,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                    };
+
+                    _dbContext.Patients.Add(patient);
+                    await _dbContext.SaveChangesAsync();
+                }
+            );
+        }
+
+        public async Task<AuthResponseDto> RegisterCaregiverAsync(
+            RegisterCaregiverDto registerCaregiverDto
+        )
+        {
+            ArgumentNullException.ThrowIfNull(registerCaregiverDto);
+
+            return await RegistrationHelper(
+                registerCaregiverDto.Email,
+                registerCaregiverDto.Password,
+                "Caregiver",
+                async (user) =>
+                {
+                    Caregiver caregiver = new Caregiver
+                    {
+                        UserId = user.Id,
+                        FirstName = registerCaregiverDto.FirstName,
+                        LastName = registerCaregiverDto.LastName,
+                        Specialisation = registerCaregiverDto.Specialisation,
+                        Bio = registerCaregiverDto.Bio,
+                        Room = registerCaregiverDto.Room,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                    };
+
+                    await _caregiverRepository.SaveAsync(caregiver);
+                }
+            );
+        }
+
+        /// <summary>
+        /// Helper method that handles the common registration flow for all user types.
+        /// </summary>
+        private async Task<AuthResponseDto> RegistrationHelper(
+            string email,
+            string password,
+            string roleName,
+            Func<ApplicationUser, Task> persistEntityAsync
+        )
+        {
+            ApplicationUser? existingUser = await _userManager.FindByEmailAsync(email);
             if (existingUser != null)
             {
                 return new AuthResponseDto { Success = false, Message = "Email is already taken" };
@@ -70,16 +135,9 @@ namespace HealthCareAB_v1.Services
 
             try
             {
-                ApplicationUser user = new ApplicationUser
-                {
-                    UserName = registerDto.Email,
-                    Email = registerDto.Email,
-                };
+                ApplicationUser user = new ApplicationUser { UserName = email, Email = email };
 
-                IdentityResult createResult = await _userManager.CreateAsync(
-                    user,
-                    registerDto.Password
-                );
+                IdentityResult createResult = await _userManager.CreateAsync(user, password);
                 if (!createResult.Succeeded)
                 {
                     await transaction.RollbackAsync();
@@ -90,7 +148,7 @@ namespace HealthCareAB_v1.Services
                     };
                 }
 
-                IdentityResult roleResult = await _userManager.AddToRoleAsync(user, "Patient");
+                IdentityResult roleResult = await _userManager.AddToRoleAsync(user, roleName);
                 if (!roleResult.Succeeded)
                 {
                     await _userManager.DeleteAsync(user);
@@ -102,25 +160,7 @@ namespace HealthCareAB_v1.Services
                     };
                 }
 
-                string lastFour = PersonalIdentityNumber(
-                    registerDto.PersonalIdentityNumber
-                );
-
-                Patient patient = new Patient
-                {
-                    UserId = user.Id,
-                    FirstName = registerDto.FirstName,
-                    LastName = registerDto.LastName,
-                    PhoneNumber = registerDto.PhoneNumber,
-                    DateOfBirth = registerDto.DateOfBirth,
-                    PersonalIdentityNumber = lastFour,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
-                };
-
-                _dbContext.Patients.Add(patient);
-                await _dbContext.SaveChangesAsync();
-
+                await persistEntityAsync(user);
                 await transaction.CommitAsync();
 
                 return new AuthResponseDto
@@ -128,7 +168,7 @@ namespace HealthCareAB_v1.Services
                     Success = true,
                     Message = "User registered successfully",
                     Username = user.Email,
-                    Roles = new List<string> { "Patient" },
+                    Roles = new List<string> { roleName },
                 };
             }
             catch
@@ -336,7 +376,7 @@ namespace HealthCareAB_v1.Services
 
         private string PersonalIdentityNumber(string personalIdentityNumber)
         {
-            if(personalIdentityNumber.Contains("-"))
+            if (personalIdentityNumber.Contains("-"))
             {
                 return personalIdentityNumber.Split('-')[1];
             }
