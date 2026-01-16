@@ -28,7 +28,6 @@ namespace HealthCareAB.Test.Services
         {
             Email = email,
             Password = "ValidP@ssw0rd!",
-            ConfirmPassword = "ValidP@ssw0rd!",
             FirstName = "Wa",
             Lastname = "Lee",
             PhoneNumber = "0700000000",
@@ -162,35 +161,6 @@ namespace HealthCareAB.Test.Services
             Assert.True(tx.RolledBack);
             Assert.False(tx.Committed);
             dbMock.Verify(d => d.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        /// <summary>
-        /// Verifies registration fails when passwords do not match.
-        /// </summary>
-        [Fact]
-        public async Task Register_Fails_When_Passwords_Do_Not_Match()
-        {
-            // Arrange
-            var userMgr = UserManagerMockHelper.Create();
-            userMgr.Setup(m => m.FindByEmailAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
-            userMgr.Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-                   .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Passwords do not match" }));
-
-            var (dbMock, added, tx) = MockDb();
-            var sut = CreateSut(userMgr, dbMock.Object);
-
-            var dto = ValidDto();
-            dto.ConfirmPassword = "DifferentPassword!";
-
-            // Act
-            var result = await sut.RegisterAsync(dto);
-
-            // Assert
-            Assert.False(result.Success);
-            Assert.Contains("Passwords do not match", result.Message);
-            Assert.Empty(added);
-            Assert.True(tx.RolledBack);
-            Assert.False(tx.Committed);
         }
 
         /// <summary>

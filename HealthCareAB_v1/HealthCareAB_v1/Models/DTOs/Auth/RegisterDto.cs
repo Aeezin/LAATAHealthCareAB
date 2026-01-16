@@ -24,8 +24,6 @@ namespace HealthCareAB_v1.DTOs
         [RegularExpression(@"^\d{4}-\d{2}-\d{2}$", ErrorMessage = "Format must be YYYY-MM-DD")]
         public string DateOfBirth { get; set; } = null!;
 
-        [Required(ErrorMessage = "Correct personal identity number is required")]
-        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Format must be YYYYMMDD-XXXX")]
         public string PersonalIdentityNumber { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]
@@ -36,10 +34,6 @@ namespace HealthCareAB_v1.DTOs
             ErrorMessage = "Password must be at least 8 characters long and have at least 1 capital letter, 1 number and 1 special character"
         )]
         public string Password { get; set; } = null!;
-
-        [Required]
-        [Compare(nameof(Password), ErrorMessage = "Passwords does not match")]
-        public string ConfirmPassword { get; set; } = null!;
 
         [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone number is invalid")]
         public string? PhoneNumber { get; set; }

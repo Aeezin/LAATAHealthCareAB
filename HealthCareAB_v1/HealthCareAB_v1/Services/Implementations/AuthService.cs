@@ -102,6 +102,10 @@ namespace HealthCareAB_v1.Services
                     };
                 }
 
+                string lastFour = PersonalIdentityNumber(
+                    registerDto.PersonalIdentityNumber
+                );
+
                 Patient patient = new Patient
                 {
                     UserId = user.Id,
@@ -109,7 +113,7 @@ namespace HealthCareAB_v1.Services
                     LastName = registerDto.LastName,
                     PhoneNumber = registerDto.PhoneNumber,
                     DateOfBirth = registerDto.DateOfBirth,
-                    PersonalIdentityNumber = registerDto.PersonalIdentityNumber,
+                    PersonalIdentityNumber = lastFour,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                 };
@@ -328,6 +332,16 @@ namespace HealthCareAB_v1.Services
                 Path = "/",
                 Expires = DateTimeOffset.UtcNow.AddDays(-1),
             };
+        }
+
+        private string PersonalIdentityNumber(string personalIdentityNumber)
+        {
+            if(personalIdentityNumber.Contains("-"))
+            {
+                return personalIdentityNumber.Split('-')[1];
+            }
+
+            return personalIdentityNumber;
         }
     }
 }
