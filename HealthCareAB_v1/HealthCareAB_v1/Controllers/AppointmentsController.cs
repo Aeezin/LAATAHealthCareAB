@@ -124,4 +124,25 @@ public class AppointmentsController : ControllerBase
             return StatusCode(500, "An unknown error occurred.");
         }
     }
+
+    [HttpGet("available-slots")]
+    public async Task<IActionResult> GetAvailableTimeSlots(
+        [FromQuery] GetAvailableSlotsQuery query)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (query.StartDate >= query.EndDate)
+            return BadRequest("Start date must be before end date");
+
+        if ((query.EndDate - query.StartDate).TotalDays > 90)
+            return BadRequest("Date range cannot exceed 90 days");
+
+        var availableSlots = await _appointmentService.GetAvailableTimeSlotsAsync(
+            query.CaregiverId,
+            query.StartDate,
+            query.EndDate);
+
+        return Ok(availableSlots);
+    }
 }
