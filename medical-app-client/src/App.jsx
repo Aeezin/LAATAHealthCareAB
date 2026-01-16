@@ -42,6 +42,10 @@ function App() {
               </RequireAuth>
             }
           />
+          <Route path="/choose-caregiver"
+           element={<RequireAuth allowedRoles={["User"]}> 
+           <ChooseCaregiver/> 
+           </RequireAuth>} />
 
           {/* Fallback route - redirects unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

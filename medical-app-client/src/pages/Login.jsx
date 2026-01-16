@@ -14,7 +14,6 @@ const LOGIN_URL_CAREGIVER = "http://localhost:5256/api/Caregivers/login";
 
 // Styled components for login page layout
 const LoginContainer = styled(Stack)`
-  height: 100vh;
   align-items: center;
 `;
 
