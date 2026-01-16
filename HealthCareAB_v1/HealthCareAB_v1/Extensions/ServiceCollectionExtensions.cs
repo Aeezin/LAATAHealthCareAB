@@ -27,6 +27,7 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<ICaregiverService, CaregiverService>();
             services.AddScoped<IPatientService, PatientService>();
             services.AddScoped<ICaregiverScheduleService, CaregiverScheduleService>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
 
             return services;
         }
@@ -91,6 +92,7 @@ namespace HealthCareAB_v1.Extensions
             services.AddScoped<IPatientRepository, PatientRepository>();
             services.AddScoped<ICaregiverRepository, CaregiverRepository>();
             services.AddScoped<ICaregiverScheduleRepository, CaregiverScheduleRepository>();
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
             return services;
         }
 
