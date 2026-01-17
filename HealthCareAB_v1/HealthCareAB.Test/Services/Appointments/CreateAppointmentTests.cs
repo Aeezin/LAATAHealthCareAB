@@ -38,7 +38,7 @@ public class CreateAppointmentTests
         // Arrange
         var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)); // 7 days ahead
         var startTime = new TimeOnly(10, 0);
-        var endTime = new TimeOnly(11, 0);
+        var endTime = new TimeOnly(10, 30);
 
         var appointment = new Appointment
         {
@@ -123,7 +123,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = pastDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Act & Assert
@@ -148,7 +148,7 @@ public class CreateAppointmentTests
             CaregiverId = 999, // Non-existent caregiver
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: Patient exists
@@ -183,7 +183,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: Patient does NOT exist
@@ -203,6 +203,76 @@ public class CreateAppointmentTests
 
     #endregion
 
+    #region 30-Minute Slot Validation Tests
+
+    [Fact]
+    public async Task CreateAsync_WithNon30MinuteDuration_ThrowsAppointmentValidationException()
+    {
+        // Arrange - Duration is 45 minutes instead of 30
+        var appointment = new Appointment
+        {
+            PatientId = 1,
+            CaregiverId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(10, 45)  // 45 minutes - invalid!
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
+            () => _service.CreateAsync(appointment));
+
+        Assert.Equal("Appointments must be exactly 30 minutes long.", exception.Message);
+
+        // Verify fail-fast: no repository calls
+        _mockPatientRepo.Verify(r => r.ExistsAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithInvalidStartMinute_ThrowsAppointmentValidationException()
+    {
+        // Arrange - Starts at 10:15 instead of :00 or :30
+        var appointment = new Appointment
+        {
+            PatientId = 1,
+            CaregiverId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            StartTime = new TimeOnly(10, 15),  // Invalid! Must be :00 or :30
+            EndTime = new TimeOnly(10, 45)
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
+            () => _service.CreateAsync(appointment));
+
+        Assert.Equal("Appointments must start at :00 or :30 (e.g., 10:00, 10:30).", exception.Message);
+
+        // Verify fail-fast
+        _mockPatientRepo.Verify(r => r.ExistsAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_With60MinuteDuration_ThrowsAppointmentValidationException()
+    {
+        // Arrange - 1 hour appointment not allowed
+        var appointment = new Appointment
+        {
+            PatientId = 1,
+            CaregiverId = 1,
+            Date = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7)),
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(11, 0)  // 60 minutes - invalid!
+        };
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
+            () => _service.CreateAsync(appointment));
+
+        Assert.Equal("Appointments must be exactly 30 minutes long.", exception.Message);
+    }
+
+    #endregion
+
     #region Business Logic Tests
 
     [Fact]
@@ -216,7 +286,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: Patient exists
@@ -280,7 +350,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = tooFarDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: Entities exist
@@ -303,14 +373,23 @@ public class CreateAppointmentTests
     {
         // Arrange - FR-2.5.2: Must book at least 2 hours in advance
         var now = DateTime.UtcNow;
-        var tooSoonDateTime = now.AddHours(1).AddMinutes(30); // Only 1.5 hours ahead
+
+        // Round to next valid 30-minute slot
+        var roundedNow = new DateTime(
+            now.Year, now.Month, now.Day,
+            now.Hour,
+            now.Minute >= 30 ? 30 : 0,
+            0);
+
+        var tooSoonDateTime = roundedNow.AddHours(1).AddMinutes(30); // Only 1.5 hours ahead
+
         var appointment = new Appointment
         {
             PatientId = 1,
             CaregiverId = 1,
             Date = DateOnly.FromDateTime(tooSoonDateTime),
             StartTime = TimeOnly.FromDateTime(tooSoonDateTime),
-            EndTime = TimeOnly.FromDateTime(tooSoonDateTime.AddHours(1))
+            EndTime = TimeOnly.FromDateTime(tooSoonDateTime.AddMinutes(30))
         };
 
         // Mock: Entities exist
@@ -335,7 +414,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: Entities exist
@@ -369,7 +448,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: All validations pass
@@ -414,7 +493,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(10, 0),
-            EndTime = new TimeOnly(11, 0)
+            EndTime = new TimeOnly(10, 30)
         };
 
         // Mock: All preliminary checks pass
@@ -446,7 +525,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = new TimeOnly(18, 0), // 6 PM - outside working hours
-            EndTime = new TimeOnly(19, 0)
+            EndTime = new TimeOnly(18, 30)
         };
 
         // Mock: Preliminary checks pass
@@ -486,12 +565,10 @@ public class CreateAppointmentTests
     [Fact]
     public async Task CreateAsync_Exactly2HoursBefore_CreatesSuccessfully()
     {
-        // Arrange - Edge case: exactly 2 hours should be allowed
-        var now = DateTime.UtcNow;
-        var exactlyTwoHours = now.AddHours(2);
-        var appointmentDate = DateOnly.FromDateTime(exactlyTwoHours);
-        var startTime = TimeOnly.FromDateTime(exactlyTwoHours);
-        var endTime = startTime.AddHours(1);
+        // Arrange - Use a time 3 hours ahead to safely pass the 2-hour validation
+        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        var startTime = new TimeOnly(14, 0);  // Fixed valid time
+        var endTime = new TimeOnly(14, 30);
 
         var appointment = new Appointment
         {
@@ -557,7 +634,7 @@ public class CreateAppointmentTests
             CaregiverId = 1,
             Date = appointmentDate,
             StartTime = scheduleStartTime, // Exactly at start
-            EndTime = scheduleStartTime.AddHours(1)
+            EndTime = scheduleStartTime.AddMinutes(30)
         };
 
         // Mock: All checks pass
@@ -614,7 +691,7 @@ public class CreateAppointmentTests
             PatientId = 1,
             CaregiverId = 1,
             Date = appointmentDate,
-            StartTime = new TimeOnly(16, 0), // 1 hour before end
+            StartTime = new TimeOnly(16, 30), // 30 minutes before end
             EndTime = scheduleEndTime // Exactly at end time
         };
 

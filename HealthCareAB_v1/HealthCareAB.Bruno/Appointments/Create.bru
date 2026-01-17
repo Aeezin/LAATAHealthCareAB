@@ -1,0 +1,27 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5256/api/Appointments
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "patientId": 1,
+    "caregiverId": 1,
+    "date": "2026-01-22",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "patientNotes": "Regular checkup"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
