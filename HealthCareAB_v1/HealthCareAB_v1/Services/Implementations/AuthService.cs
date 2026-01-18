@@ -66,7 +66,7 @@ namespace HealthCareAB_v1.Services
                 "Patient",
                 async (user) =>
                 {
-                    string lastFour = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
+                    string fullPin = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
 
                     Patient patient = new Patient
                     {
@@ -75,7 +75,7 @@ namespace HealthCareAB_v1.Services
                         LastName = registerDto.LastName,
                         PhoneNumber = registerDto.PhoneNumber,
                         DateOfBirth = registerDto.DateOfBirth,
-                        PersonalIdentityNumber = lastFour,
+                        PersonalIdentityNumber = fullPin,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
                     };
@@ -376,12 +376,24 @@ namespace HealthCareAB_v1.Services
 
         private string PersonalIdentityNumber(string personalIdentityNumber)
         {
-            if (personalIdentityNumber.Contains("-"))
+            ArgumentException.ThrowIfNullOrWhiteSpace(personalIdentityNumber);
+
+            string normalized = personalIdentityNumber.Replace("-", "").Trim();
+
+            if (normalized.Length != 12)
             {
-                return personalIdentityNumber.Split('-')[1];
+                throw new ArgumentException("Personal identity number must be exactly 12 digits.");
             }
 
-            return personalIdentityNumber;
+            for (int i = 0; i < normalized.Length; i++)
+            {
+                if (!char.IsDigit(normalized[i]))
+                {
+                    throw new ArgumentException("Personal identity number must contain only digits.");
+                }
+            }
+
+            return normalized;
         }
     }
 }
