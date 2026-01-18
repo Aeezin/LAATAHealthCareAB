@@ -6,4 +6,6 @@ public interface IAppointmentService
 {
     Task<Appointment> CreateAsync(Appointment appointment);
     Task<List<Appointment>> GetByUserIdAsync(int userId);
+    Task<List<Appointment>> GetAvailableTimeSlotsAsync(int caregiverId, DateTime startDate, DateTime endDate);
+
 }
