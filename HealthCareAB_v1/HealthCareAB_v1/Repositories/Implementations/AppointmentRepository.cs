@@ -21,6 +21,18 @@ public class AppointmentRepository : IAppointmentRepository
         return appointment;
     }
 
+    public async Task<Appointment?> GetByIdAsync(int id)
+    {
+        return await _context.Appointments
+            .FirstOrDefaultAsync(a => a.Id == id);
+    }
+
+    public async Task UpdateAsync(Appointment appointment)
+    {
+        _context.Appointments.Update(appointment);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<int> GetPatientBookingCountInLast30DaysAsync(int patientId, DateOnly fromDate)
     {
         return await _context.Appointments

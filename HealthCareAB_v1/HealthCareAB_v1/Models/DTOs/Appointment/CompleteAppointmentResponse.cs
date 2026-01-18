@@ -2,10 +2,10 @@ using HealthCareAB_v1.Models.Enums;
 
 namespace HealthCareAB_v1.Models.DTOs.Appointment;
 
-public class AppointmentResponse
+public class CompleteAppointmentResponse
 {
     public int Id { get; set; }
-    
+
     public required int PatientId { get; set; }
     public required int CaregiverId { get; set; }
 

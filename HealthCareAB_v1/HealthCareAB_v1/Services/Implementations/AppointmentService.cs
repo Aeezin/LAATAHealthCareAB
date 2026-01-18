@@ -2,6 +2,8 @@ using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services.Interfaces;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Exceptions;
+using HealthCareAB_v1.Models.Enums;
+using HealthCareAB_v1.Models.DTOs.Appointment;
 
 namespace HealthCareAB_v1.Services.Implementations;
 
@@ -42,6 +44,54 @@ public class AppointmentService : IAppointmentService
             appointment.EndTime);
 
         return await _appointmentRepository.CreateAsync(appointment);
+    }
+
+    public async Task<Appointment> CompleteAppointmentAsync(int appointmentId, int userId, CompleteAppointmentRequest dto)
+    {
+        // Resolve Caregiver from UserId
+        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
+        if (caregiver == null)
+        {
+            throw new UnauthorizedAccessException("User is not a registered caregiver.");
+        }
+
+        var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
+
+        if (appointment == null)
+        {
+            throw new AppointmentNotFoundException($"Appointment with ID {appointmentId} not found.");
+        }
+
+        // Validate Status
+        if (appointment.Status != AppointmentStatus.Scheduled)
+        {
+            throw new AppointmentValidationException($"Appointment must be in '{AppointmentStatus.Scheduled}' status to complete. Current status: '{appointment.Status}'.");
+        }
+
+        // Validate Time
+        var appointmentEndDateTime = appointment.Date.ToDateTime(appointment.EndTime);
+        if (DateTime.UtcNow < appointmentEndDateTime)
+        {
+             throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
+        }
+
+        // Validate Caregiver
+        if (appointment.CaregiverId != caregiver.Id)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to complete this appointment.");
+        }
+
+        // Update
+        appointment.Status = AppointmentStatus.Completed;
+        if (!string.IsNullOrEmpty(dto.CaregiverNotes))
+        {
+            appointment.CaregiverNotes = dto.CaregiverNotes;
+        }
+        appointment.UpdatedAt = DateTime.UtcNow;
+
+        await _appointmentRepository.UpdateAsync(appointment);
+
+        return appointment;
     }
 
     private void ValidateBasicInput(Appointment appointment)

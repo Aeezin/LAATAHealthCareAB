@@ -565,8 +565,8 @@ public class CreateAppointmentTests
     [Fact]
     public async Task CreateAsync_Exactly2HoursBefore_CreatesSuccessfully()
     {
-        // Arrange - Use a time 3 hours ahead to safely pass the 2-hour validation
-        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        // Arrange - Use a time 1 day ahead to safely pass the 2-hour validation
+        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
         var startTime = new TimeOnly(14, 0);  // Fixed valid time
         var endTime = new TimeOnly(14, 30);
 

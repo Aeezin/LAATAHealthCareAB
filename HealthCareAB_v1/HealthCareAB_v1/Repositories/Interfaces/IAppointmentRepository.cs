@@ -5,6 +5,8 @@ namespace HealthCareAB_v1.Repositories.Interfaces;
 public interface IAppointmentRepository
 {
     Task<Appointment> CreateAsync(Appointment appointment);
+    Task<Appointment?> GetByIdAsync(int id);
+    Task UpdateAsync(Appointment appointment);
 
     Task<int> GetPatientBookingCountInLast30DaysAsync(int patientId, DateOnly fromDate);
     Task<bool> HasConflictingAppointmentAsync(
