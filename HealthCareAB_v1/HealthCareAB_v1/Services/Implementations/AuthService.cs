@@ -55,7 +55,11 @@ namespace HealthCareAB_v1.Services
             _caregiverRepository = caregiverRepository;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="registerDto"></param>
+        /// <returns></returns>
         public async Task<AuthResponseDto> RegisterPatientAsync(RegisterDto registerDto)
         {
             ArgumentNullException.ThrowIfNull(registerDto);
@@ -374,6 +378,12 @@ namespace HealthCareAB_v1.Services
             };
         }
 
+        /// <summary>
+        /// A method to split DateOfBirth and PIN
+        /// </summary>
+        /// <param name="personalIdentityNumber"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         private string PersonalIdentityNumber(string personalIdentityNumber)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(personalIdentityNumber);

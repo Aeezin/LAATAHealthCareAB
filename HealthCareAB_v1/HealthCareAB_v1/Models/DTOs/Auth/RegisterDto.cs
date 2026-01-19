@@ -20,10 +20,10 @@ namespace HealthCareAB_v1.DTOs
         [StringLength(50, MinimumLength = 5)]
         public string Email { get; set; } = null!;
 
-        [Required(ErrorMessage = "Date of Birth is required")]
         [RegularExpression(@"^\d{4}-\d{2}-\d{2}$", ErrorMessage = "Format must be YYYY-MM-DD")]
         public string DateOfBirth { get; set; } = null!;
 
+        [Required(ErrorMessage = "Personal Identity number is required")]
         public string PersonalIdentityNumber { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]
