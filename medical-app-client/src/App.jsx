@@ -29,10 +29,12 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/choose-caregiver"
             element={<ChooseCaregiver />} />
+         
 
 
           {/* TEMP PUBLIC MOVE TO PROTECTED LATER */}
           <Route path="/booking" element={<BookingView />} />
+          <Route path="/booking/:caregiverId" element={<BookingView />} />
 
           {/* Protected routes - require authentication and specific roles */}
           <Route
