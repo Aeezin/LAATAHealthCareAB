@@ -198,4 +198,52 @@ public class AppointmentsController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while completing the appointment." });
         }
     }
+
+    /// <summary>
+    /// Cancel an appointment.
+    /// Patients: Cancel > 1h before start (Deletes booking).
+    /// Caregivers: Cancel anytime (Updates status to Cancelled).
+    /// </summary>
+    /// <param name="id">Appointment ID</param>
+    /// <returns>NoContent or OK</returns>
+    [HttpPut("cancel/{id}")]
+    [Authorize]
+    public async Task<IActionResult> CancelAppointment(int id)
+    {
+        try
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized("Invalid user token.");
+            }
+
+            var appointment = await _appointmentService.CancelAppointmentAsync(id, userId);
+
+            var response = new CancelAppointmentResponse
+            {
+                Id = appointment.Id,
+                Status = appointment.Status,
+                CancelledAt = DateTime.UtcNow
+            };
+
+            return Ok(response);
+        }
+        catch (AppointmentNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+        }
+        catch (AppointmentValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while cancelling the appointment." });
+        }
+    }
 }

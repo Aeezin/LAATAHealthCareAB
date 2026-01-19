@@ -10,4 +10,5 @@ public interface IAppointmentService
     Task<List<Appointment>> GetByUserIdAsync(int userId);
     Task<AvailableTimeSlotsResponse> GetAvailableTimeSlotsAsync(int caregiverId, DateTime startDate, DateTime endDate);
     Task<Appointment> CompleteAppointmentAsync(int appointmentId, int userId, CompleteAppointmentRequest dto);
+    Task<Appointment> CancelAppointmentAsync(int appointmentId, int userId);
 }

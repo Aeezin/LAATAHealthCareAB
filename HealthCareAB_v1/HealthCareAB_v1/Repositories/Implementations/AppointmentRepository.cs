@@ -33,6 +33,16 @@ public class AppointmentRepository : IAppointmentRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task DeleteAsync(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment != null)
+        {
+            _context.Appointments.Remove(appointment);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public async Task<List<Appointment>> GetByPatientIdAsync(int patientId)
     {
         return await _context.Appointments
@@ -60,7 +70,8 @@ public class AppointmentRepository : IAppointmentRepository
         return await _context.Appointments
             .Where(a => a.CaregiverId == caregiverId &&
                         a.Date >= DateOnly.FromDateTime(startDate) &&
-                        a.Date <= DateOnly.FromDateTime(endDate))
+                        a.Date <= DateOnly.FromDateTime(endDate) &&
+                        a.Status != AppointmentStatus.Cancelled)
             .ToListAsync();
     }
 

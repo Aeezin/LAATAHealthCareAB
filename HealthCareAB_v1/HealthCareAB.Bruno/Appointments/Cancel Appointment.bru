@@ -1,0 +1,17 @@
+meta {
+  name: Cancel Appointment
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:5256/api/appointments/complete/2
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "caregiverNotes": "All good, patient is healthy."
+  }
+}
