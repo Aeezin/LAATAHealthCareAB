@@ -1,4 +1,4 @@
-namespace HealthCareAB_v1.Models.DTOs.Appointment;
+namespace HealthCareAB_v1.Models.DTOs;
 
 public class CompleteAppointmentRequest
 {
