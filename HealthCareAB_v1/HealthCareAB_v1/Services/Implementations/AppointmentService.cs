@@ -319,7 +319,6 @@ public class AppointmentService : IAppointmentService
             // Check if this slot conflicts with any existing appointment
             var hasConflict = existingAppointments.Any(appt =>
                 appt.Date == slot.Date &&
-                appt.Status != AppointmentStatus.Cancelled &&
                 TimeSlotsOverlap(slot.StartTime, slot.EndTime, appt.StartTime, appt.EndTime)
             );
 

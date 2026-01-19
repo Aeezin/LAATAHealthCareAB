@@ -159,74 +159,6 @@ public class GetAvailableTimeSlotsTests
         Assert.Equal(new TimeOnly(9, 30), daySlots.First().StartTime);
     }
 
-    [Fact]
-    public async Task GetAvailableTimeSlotsAsync_CancelledAppointments_DoesNotFilterOut()
-    {
-        // Arrange
-        var caregiverId = 1;
-        var startDate = DateTime.UtcNow.AddDays(3);
-        var endDate = DateTime.UtcNow.AddDays(3);
-        var appointmentDate = DateOnly.FromDateTime(startDate);
-
-        var caregiver = new Caregiver
-        {
-            Id = caregiverId,
-            UserId = 1,
-            FirstName = "Anna",
-            LastName = "Andersson",
-            Specialisation = "General",
-            Room = "101"
-        };
-
-        var schedules = new List<CaregiverSchedule>
-        {
-            new CaregiverSchedule
-            {
-                Id = 1,
-                CaregiverId = caregiverId,
-                DayOfWeek = startDate.DayOfWeek,
-                StartTime = new TimeOnly(9, 0),
-                EndTime = new TimeOnly(10, 0),
-                IsActive = true
-            }
-        };
-
-        // Cancelled appointment should NOT block the slot
-        var existingAppointments = new List<Appointment>
-        {
-            new Appointment
-            {
-                Id = 1,
-                PatientId = 1,
-                CaregiverId = caregiverId,
-                Date = appointmentDate,
-                StartTime = new TimeOnly(9, 0),
-                EndTime = new TimeOnly(9, 30),
-                Status = AppointmentStatus.Cancelled
-            }
-        };
-
-        _mockCaregiverRepo
-            .Setup(r => r.GetByIdAsync(caregiverId))
-            .ReturnsAsync(caregiver);
-
-        _mockScheduleRepo
-            .Setup(r => r.GetByCaregiverIdAsync(caregiverId))
-            .ReturnsAsync(schedules);
-
-        _mockAppointmentRepo
-            .Setup(r => r.GetByCaregiverAndDateRangeAsync(caregiverId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
-            .ReturnsAsync(existingAppointments);
-
-        // Act
-        var result = await _service.GetAvailableTimeSlotsAsync(caregiverId, startDate, endDate);
-
-        // Assert
-        Assert.NotNull(result);
-        var daySlots = result.AvailableSlots.First().TimeSlots;
-        Assert.Equal(2, daySlots.Count); // Both 09:00-09:30 and 09:30-10:00 available
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // NEGATIVE CASES
     // ═══════════════════════════════════════════════════════════════
@@ -252,6 +184,76 @@ public class GetAvailableTimeSlotsTests
     // ═══════════════════════════════════════════════════════════════
     // EDGE CASES
     // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task GetAvailableTimeSlotsAsync_CancelledAppointmentsByCaregiver_BlocksSlots()
+    {
+        // Arrange
+        var caregiverId = 1;
+        var startDate = DateTime.UtcNow.AddDays(3);
+        var endDate = DateTime.UtcNow.AddDays(3);
+        var appointmentDate = DateOnly.FromDateTime(startDate);
+
+        var caregiver = new Caregiver
+        {
+            Id = caregiverId,
+            UserId = 1,
+            FirstName = "Anna",
+            LastName = "Andersson",
+            Specialisation = "General",
+            Room = "101"
+        };
+
+        var schedules = new List<CaregiverSchedule>
+    {
+        new CaregiverSchedule
+        {
+            Id = 1,
+            CaregiverId = caregiverId,
+            DayOfWeek = startDate.DayOfWeek,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(10, 0),
+            IsActive = true
+        }
+    };
+
+        // Cancelled appointment should STILL block the slot (caregiver cancelled)
+        var existingAppointments = new List<Appointment>
+    {
+        new Appointment
+        {
+            Id = 1,
+            PatientId = 1,
+            CaregiverId = caregiverId,
+            Date = appointmentDate,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(9, 30),
+            Status = AppointmentStatus.Cancelled  // Caregiver cancelled - slot stays blocked
+        }
+    };
+
+        _mockCaregiverRepo
+            .Setup(r => r.GetByIdAsync(caregiverId))
+            .ReturnsAsync(caregiver);
+
+        _mockScheduleRepo
+            .Setup(r => r.GetByCaregiverIdAsync(caregiverId))
+            .ReturnsAsync(schedules);
+
+        _mockAppointmentRepo
+            .Setup(r => r.GetByCaregiverAndDateRangeAsync(caregiverId, It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(existingAppointments);
+
+        // Act
+        var result = await _service.GetAvailableTimeSlotsAsync(caregiverId, startDate, endDate);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Single(result.AvailableSlots); // One day
+        var daySlots = result.AvailableSlots.First().TimeSlots;
+        Assert.Single(daySlots); // Only 09:30-10:00 available (09:00-09:30 blocked by cancelled appointment)
+        Assert.Equal(new TimeOnly(9, 30), daySlots.First().StartTime);
+    }
 
     [Fact]
     public async Task GetAvailableTimeSlotsAsync_NoSchedules_ReturnsEmptyAvailableSlots()
