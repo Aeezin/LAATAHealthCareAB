@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useContext } from "react";
 
 // Initial authentication state - exported for use in logout functionality
 export const initialAuthState = {
@@ -13,10 +13,18 @@ export const AuthContext = createContext();
 // Provider component that wraps the app and provides auth state to all children
 export const AuthProvider = ({ children }) => {
   const [authState, setAuthState] = useState(initialAuthState);
-
   return (
     <AuthContext.Provider value={{ authState, setAuthState }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

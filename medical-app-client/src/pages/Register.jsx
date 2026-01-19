@@ -201,7 +201,7 @@ function Register() {
           </Popover.Target>
           <Popover.Dropdown>
             <FieldRequirement
-              label="Valid personal identity number format: YYMMDD-XXXX"
+              label="Valid personal identity number format: YYYYMMDD-XXXX"
               meets={validatePersonalIdentityNumber(credentials.personalIdentityNumber) === true}
             />
           </Popover.Dropdown>

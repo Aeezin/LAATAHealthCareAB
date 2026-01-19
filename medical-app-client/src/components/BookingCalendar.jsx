@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import styled from "styled-components";
 import axios from "axios";
 import { Group, Text, Button, Select, Loader } from "@mantine/core";
 import BookingCalendarSection from "./BookingCalendarSection";
 import BookingCalendarColumn from "./BookingCalendarColumn";
 
-// TODO: Replace with your real API URL
 const BOOKINGS_URL = "http://localhost:5256/api/Bookings/";
 
 const BookingCalendarContainer = styled(Group)`
@@ -49,6 +49,9 @@ function getWeekRangeString(weekDates) {
 
 // ----- Main component -----
 export default function BookingCalendar() {
+  const { authState } = useAuth();
+  const role = authState.roles 
+  
   const today = new Date();
 
   // --- State ---
@@ -107,8 +110,8 @@ export default function BookingCalendar() {
         date: day.date,
         startTime: appt.startTime,
         endTime: appt.endTime,
-      }))
-    )
+      })),
+    ),
   );
 
   const weekDates = getWeekDates(currentWeekStart);
@@ -185,14 +188,14 @@ export default function BookingCalendar() {
                   <BookingCalendarSection
                     key={appt.id}
                     booking={appt}
-                    role="caregiver"
+                    role={role}
                     onBook={(b) => console.log("Book", b)}
                     onEdit={(b) => console.log("Edit", b)}
                     onDelete={(b) => console.log("Delete", b)}
                   />
                 ))
               ) : (
-                <Text size="xs" color="dimmed">
+                <Text size="xs" c="dimmed">
                   No bookings
                 </Text>
               )}
