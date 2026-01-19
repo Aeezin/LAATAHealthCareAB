@@ -128,6 +128,24 @@ public class AppointmentsController : ControllerBase
         }
     }
 
+    [HttpGet("available-slots")]
+    public async Task<IActionResult> GetAvailableTimeSlots(
+        [FromQuery] GetAvailableSlotsQuery query)
+    {
+        if (query.StartDate >= query.EndDate)
+            return BadRequest("Start date must be before end date");
+
+        if ((query.EndDate - query.StartDate).TotalDays > 90)
+            return BadRequest("Date range cannot exceed 90 days");
+
+        var availableSlots = await _appointmentService.GetAvailableTimeSlotsAsync(
+            query.CaregiverId,
+            query.StartDate,
+            query.EndDate);
+
+        return Ok(availableSlots);
+    }
+
     /// <summary>
     /// Mark an appointment as completed.
     /// </summary>

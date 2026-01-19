@@ -7,6 +7,7 @@ public interface IAppointmentRepository
     Task<Appointment> CreateAsync(Appointment appointment);
     Task<List<Appointment>> GetByPatientIdAsync(int patientId);
     Task<List<Appointment>> GetByCaregiverIdAsync(int caregiverId);
+    Task<List<Appointment>> GetByCaregiverAndDateRangeAsync(int caregiverId, DateTime startDate, DateTime endDate);
     Task<Appointment?> GetByIdAsync(int id);
     Task UpdateAsync(Appointment appointment);
 

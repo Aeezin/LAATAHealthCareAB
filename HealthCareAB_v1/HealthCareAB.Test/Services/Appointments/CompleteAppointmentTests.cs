@@ -3,7 +3,7 @@ using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Models.Enums;
 using HealthCareAB_v1.Exceptions;
-using HealthCareAB_v1.Models.DTOs.Appointment;
+using HealthCareAB_v1.Models.DTOs;
 using Xunit;
 using Moq;
 
@@ -42,9 +42,9 @@ public class CompleteAppointmentTests
         var request = new CompleteAppointmentRequest { CaregiverNotes = "All good." };
 
         // Mock: Caregiver exists linked to this UserId
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",
@@ -79,10 +79,10 @@ public class CompleteAppointmentTests
         Assert.NotNull(result);
         Assert.Equal(AppointmentStatus.Completed, result.Status);
         Assert.Equal("All good.", result.CaregiverNotes);
-        
+
         // Verify update was called
-        _mockAppointmentRepo.Verify(r => r.UpdateAsync(It.Is<Appointment>(a => 
-            a.Status == AppointmentStatus.Completed && 
+        _mockAppointmentRepo.Verify(r => r.UpdateAsync(It.Is<Appointment>(a =>
+            a.Status == AppointmentStatus.Completed &&
             a.CaregiverNotes == "All good.")), Times.Once);
     }
 
@@ -95,9 +95,9 @@ public class CompleteAppointmentTests
         var request = new CompleteAppointmentRequest();
 
         // Mock: Caregiver exists
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",
@@ -131,9 +131,9 @@ public class CompleteAppointmentTests
         var request = new CompleteAppointmentRequest();
 
         // Mock: Caregiver exists (ID 1)
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",
@@ -170,11 +170,11 @@ public class CompleteAppointmentTests
         // Arrange
         var appointmentId = 1;
         var userId = 101;
-        
+
         // Mock: Caregiver
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",
@@ -214,9 +214,9 @@ public class CompleteAppointmentTests
         var userId = 101;
 
         // Mock: Caregiver
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",
@@ -261,9 +261,9 @@ public class CompleteAppointmentTests
         var request = new CompleteAppointmentRequest { CaregiverNotes = longNotes };
 
         // Mock: Caregiver
-        var caregiver = new Caregiver 
-        { 
-            Id = 1, 
+        var caregiver = new Caregiver
+        {
+            Id = 1,
             UserId = userId,
             FirstName = "Test",
             LastName = "Caregiver",

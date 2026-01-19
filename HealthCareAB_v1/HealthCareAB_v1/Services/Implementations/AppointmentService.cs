@@ -2,8 +2,8 @@ using HealthCareAB_v1.Repositories.Interfaces;
 using HealthCareAB_v1.Services.Interfaces;
 using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Exceptions;
+using HealthCareAB_v1.Models.DTOs;
 using HealthCareAB_v1.Models.Enums;
-using HealthCareAB_v1.Models.DTOs.Appointment;
 
 namespace HealthCareAB_v1.Services.Implementations;
 
@@ -42,10 +42,8 @@ public class AppointmentService : IAppointmentService
             throw new AppointmentValidationException("Cannot book appointments in the past.");
         }
 
-        //  Entity Existence Checks
         await ValidateEntitiesExistAsync(appointment.PatientId, appointment.CaregiverId);
 
-        // Business Rule Validations
         await ValidateBusinessRulesAsync(appointment);
 
         // Schedule & Availability Validation
@@ -56,6 +54,110 @@ public class AppointmentService : IAppointmentService
             appointment.EndTime);
 
         return await _appointmentRepository.CreateAsync(appointment);
+    }
+
+    public async Task<List<Appointment>> GetByUserIdAsync(int userId)
+    {
+        // Try to find Patient for this user
+        var patient = await _patientRepository.GetByUserIdAsync(userId);
+
+        if (patient != null)
+        {
+            return await _appointmentRepository
+                .GetByPatientIdAsync(patient.Id);
+        }
+
+        // Try to find Caregiver for this user
+        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
+
+        if (caregiver != null)
+        {
+            return await _appointmentRepository
+                .GetByCaregiverIdAsync(caregiver.Id);
+        }
+
+        throw new NotFoundException("User profile not found");
+    }
+
+    public async Task<AvailableTimeSlotsResponse> GetAvailableTimeSlotsAsync(int caregiverId, DateTime startDate, DateTime endDate)
+    {
+        // Get Caregiver
+        var caregiver = await _caregiverRepository.GetByIdAsync(caregiverId);
+        if (caregiver == null)
+        {
+            throw new CaregiverNotFoundException($"Caregiver with ID: '{caregiverId} not found.");
+        }
+
+        // FR-2.5.1 - Max 90 days in advance
+        var maxBookingDate = DateTime.UtcNow.Date.AddDays(90);
+        if (endDate > maxBookingDate)
+        {
+            endDate = maxBookingDate;
+        }
+
+        // FR-2.5.2 Minimum 2 hours notice
+        var minBookingTime = DateTime.UtcNow.AddHours(2);
+        if (startDate < minBookingTime)
+        {
+            startDate = minBookingTime;
+        }
+
+        // Edge case: If after adjustments, range is invalid, return empty
+        if (startDate >= endDate)
+        {
+            return new AvailableTimeSlotsResponse
+            {
+                CaregiverId = caregiverId,
+                CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
+                AvailableSlots = new List<DailyAvailability>()
+            };
+        }
+
+        // Get Caregiver's schedule templates
+        var schedules = await _scheduleRepository.GetByCaregiverIdAsync(caregiverId);
+
+        if (!schedules.Any())
+        {
+            return new AvailableTimeSlotsResponse
+            {
+                CaregiverId = caregiverId,
+                CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
+                AvailableSlots = new List<DailyAvailability>()
+            };
+        }
+
+        // Expand schedules into concrete time slots
+        var allPotentialSlots = ExpandSchedulesToTimeSlots(schedules, startDate, endDate);
+
+        var existingAppointments = await _appointmentRepository
+            .GetByCaregiverAndDateRangeAsync(caregiverId, startDate, endDate);
+
+        // Filter out conflicts with existing appointments
+        var availableSlots = FilterOutConflicts(allPotentialSlots, existingAppointments);
+
+        // Group by date and map to DTOs
+        var groupedByDate = availableSlots
+            .GroupBy(slot => slot.Date)
+            .Select(group => new DailyAvailability
+            {
+                Date = group.Key.ToDateTime(TimeOnly.MinValue),
+                TimeSlots = group.Select(slot => new TimeSlotDto
+                {
+                    StartTime = slot.StartTime,
+                    EndTime = slot.EndTime
+                })
+                .OrderBy(ts => ts.StartTime)
+                .ToList()
+            })
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        return new AvailableTimeSlotsResponse
+        {
+            CaregiverId = caregiverId,
+            CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
+            AvailableSlots = groupedByDate
+        };
     }
 
     public async Task<Appointment> CompleteAppointmentAsync(int appointmentId, int userId, CompleteAppointmentRequest dto)
@@ -90,7 +192,7 @@ public class AppointmentService : IAppointmentService
         var appointmentEndDateTime = appointment.Date.ToDateTime(appointment.EndTime);
         if (DateTime.UtcNow < appointmentEndDateTime)
         {
-             throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
+            throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
         }
 
 
@@ -108,6 +210,10 @@ public class AppointmentService : IAppointmentService
         return appointment;
     }
 
+
+    // ============================================
+    //            HELPER METHODS: CREATE
+    //============================================
     private void ValidateBasicInput(Appointment appointment)
     {
         // StartTime < EndTime
@@ -139,32 +245,6 @@ public class AppointmentService : IAppointmentService
         }
     }
 
-    public async Task<List<Appointment>> GetByUserIdAsync(int userId)
-    {
-        // Try to find Patient for this user
-        var patient = await _patientRepository.GetByUserIdAsync(userId);
-
-        if (patient != null)
-        {
-            return await _appointmentRepository
-                .GetByPatientIdAsync(patient.Id);
-        }
-
-        // Try to find Caregiver for this user
-        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
-
-        if (caregiver != null)
-        {
-            return await _appointmentRepository
-                .GetByCaregiverIdAsync(caregiver.Id);
-        }
-
-        throw new NotFoundException("User profile not found");
-    }
-
-
-
-    // -- HELPER METHODS --
     private async Task ValidateEntitiesExistAsync(int patientId, int caregiverId)
     {
         // Patient exists
@@ -253,5 +333,87 @@ public class AppointmentService : IAppointmentService
             throw new AppointmentConflictException(
                 "The requested time slot is already booked.");
         }
+    }
+
+    // ============================================
+    //   HELPER METHODS: GET AVAILABLE TIME SLOTS
+    //============================================
+
+    // A simple structure which helps hold time slots while processing
+    private class TimeSlot
+    {
+        public DateOnly Date { get; set; }
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
+    }
+
+    private List<TimeSlot> ExpandSchedulesToTimeSlots(
+        List<CaregiverSchedule> schedules,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        var slots = new List<TimeSlot>();
+
+        // Loop through each day in the date range
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            var dayOfWeek = date.DayOfWeek;  // Get the day (Monday, Tuesday, etc.)
+
+            // Find schedules for this day of the week
+            var daySchedules = schedules
+                .Where(s => s.DayOfWeek == dayOfWeek && s.IsActive)
+                .ToList();
+
+            foreach (var schedule in daySchedules)
+            {
+                // Break the schedule into 30-minute slots
+                var currentTime = schedule.StartTime;
+
+                while (currentTime < schedule.EndTime)
+                {
+                    var slotEndTime = currentTime.Add(TimeSpan.FromMinutes(30));
+
+                    // Only add if the slot fits within the schedule
+                    if (slotEndTime <= schedule.EndTime)
+                    {
+                        slots.Add(new TimeSlot
+                        {
+                            Date = DateOnly.FromDateTime(date),
+                            StartTime = currentTime,
+                            EndTime = slotEndTime
+                        });
+                    }
+
+                    currentTime = slotEndTime;
+                }
+            }
+        }
+
+        return slots;
+    }
+
+    private bool TimeSlotsOverlap(TimeOnly start1, TimeOnly end1, TimeOnly start2, TimeOnly end2)
+    {
+        // Two time ranges overlap if:
+        // - First slot starts before second slot ends AND
+        // - Second slot starts before first slot ends
+        return start1 < end2 && start2 < end1;
+    }
+
+    private List<TimeSlot> FilterOutConflicts(
+        List<TimeSlot> potentialSlots,
+        List<Appointment> existingAppointments)
+    {
+        return potentialSlots.Where(slot =>
+        {
+            // Check if this slot conflicts with any existing appointment
+            var hasConflict = existingAppointments.Any(appt =>
+                appt.Date == slot.Date &&
+                TimeSlotsOverlap(slot.StartTime, slot.EndTime, appt.StartTime, appt.EndTime)
+            );
+
+            // Keep the slot only if there's NO conflict
+            return !hasConflict;
+        }).ToList();
     }
 }

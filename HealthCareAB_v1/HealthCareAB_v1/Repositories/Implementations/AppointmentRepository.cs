@@ -55,6 +55,15 @@ public class AppointmentRepository : IAppointmentRepository
             .ToListAsync();
     }
 
+    public async Task<List<Appointment>> GetByCaregiverAndDateRangeAsync(int caregiverId, DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .Where(a => a.CaregiverId == caregiverId &&
+                        a.Date >= DateOnly.FromDateTime(startDate) &&
+                        a.Date <= DateOnly.FromDateTime(endDate))
+            .ToListAsync();
+    }
+
     public async Task<int> GetPatientAppointmentCountInLast30DaysAsync(int patientId, DateOnly fromDate)
     {
         return await _context.Appointments
