@@ -1,7 +1,7 @@
-using HealthCareAB_v1.Services.Interfaces;
-using HealthCareAB_v1.Models.Entities;
-using HealthCareAB_v1.Models.DTOs;
 using HealthCareAB_v1.Exceptions;
+using HealthCareAB_v1.Models.DTOs;
+using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareAB_v1.Controllers;
@@ -40,11 +40,10 @@ public class CaregiverSchedulesController : ControllerBase
                 DayOfWeek = created.DayOfWeek,
                 StartTime = created.StartTime,
                 EndTime = created.EndTime,
-                IsActive = true
+                IsActive = true,
             };
 
-            return CreatedAtAction(nameof(GetSchedule),
-                  new { id = response.Id }, response);
+            return CreatedAtAction(nameof(GetSchedule), new { id = response.Id }, response);
         }
         catch (CaregiverScheduleNotFoundException ex)
         {
@@ -75,7 +74,7 @@ public class CaregiverSchedulesController : ControllerBase
                 DayOfWeek = schedule.DayOfWeek,
                 StartTime = schedule.StartTime,
                 EndTime = schedule.EndTime,
-                IsActive = schedule.IsActive
+                IsActive = schedule.IsActive,
             };
 
             return Ok(response);
@@ -98,15 +97,17 @@ public class CaregiverSchedulesController : ControllerBase
         {
             var schedules = await _caregiverScheduleService.GetByCaregiverIdAsync(caregiverId);
 
-            var response = schedules.Select(s => new CaregiverScheduleResponse
-            {
-                Id = s.Id,
-                CaregiverId = s.CaregiverId,
-                DayOfWeek = s.DayOfWeek,
-                StartTime = s.StartTime,
-                EndTime = s.EndTime,
-                IsActive = s.IsActive
-            }).ToList();
+            var response = schedules
+                .Select(s => new CaregiverScheduleResponse
+                {
+                    Id = s.Id,
+                    CaregiverId = s.CaregiverId,
+                    DayOfWeek = s.DayOfWeek,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    IsActive = s.IsActive,
+                })
+                .ToList();
 
             return Ok(response);
         }
@@ -118,7 +119,10 @@ public class CaregiverSchedulesController : ControllerBase
 
     // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateSchedule(int id, [FromBody] UpdateCaregiverScheduleRequest req)
+    public async Task<IActionResult> UpdateSchedule(
+        int id,
+        [FromBody] UpdateCaregiverScheduleRequest req
+    )
     {
         try
         {
@@ -131,7 +135,7 @@ public class CaregiverSchedulesController : ControllerBase
                 DayOfWeek = updated.DayOfWeek,
                 StartTime = updated.StartTime,
                 EndTime = updated.EndTime,
-                IsActive = updated.IsActive
+                IsActive = updated.IsActive,
             };
 
             return Ok(response);
