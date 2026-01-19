@@ -21,10 +21,16 @@ public class AppointmentsController : ControllerBase
         _appointmentService = appointmentService;
     }
 
-    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
+
     [HttpPost]
+    [Authorize(Roles = "Patient")] // Should Caregivers be able to Create an appointment for a patient? TBD.
     public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentRequest req)
     {
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return Unauthorized("Invalid user token.");
+        }
         try
         {
             var appointment = new Appointment
@@ -37,7 +43,7 @@ public class AppointmentsController : ControllerBase
                 PatientNotes = req.PatientNotes
             };
 
-            var created = await _appointmentService.CreateAsync(appointment);
+            var created = await _appointmentService.CreateAsync(appointment, userId);
 
             var response = new AppointmentResponse
             {
@@ -81,21 +87,28 @@ public class AppointmentsController : ControllerBase
         {
             return Conflict(new { error = ex.Message });
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
         catch (Exception)
         {
             return StatusCode(500, "An unknown error occurred.");
         }
     }
 
-    // [Authorize(Roles = "Patient", "Caregiver", "Admin")]
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetMyAppointments()
     {
-        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+        {
+            return Unauthorized("Invalid user token.");
+        }
 
         try
         {
-
             var appointments = await _appointmentService.GetByUserIdAsync(userId);
 
             var responses = appointments.Select(a => new AppointmentResponse
@@ -129,6 +142,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpGet("available-slots")]
+    [Authorize]
     public async Task<IActionResult> GetAvailableTimeSlots(
         [FromQuery] GetAvailableSlotsQuery query)
     {

@@ -26,7 +26,7 @@ public class AppointmentService : IAppointmentService
         _scheduleRepository = scheduleRepository;
     }
 
-    public async Task<Appointment> CreateAsync(Appointment appointment)
+    public async Task<Appointment> CreateAsync(Appointment appointment, int userId)
     {
         ValidateBasicInput(appointment);
         // Validation: StartTime < EndTime
@@ -43,6 +43,8 @@ public class AppointmentService : IAppointmentService
         }
 
         await ValidateEntitiesExistAsync(appointment.PatientId, appointment.CaregiverId);
+
+        await ValidatePatientOwnershipAsync(appointment.PatientId, userId);
 
         await ValidateBusinessRulesAsync(appointment);
 
@@ -293,12 +295,23 @@ public class AppointmentService : IAppointmentService
             throw new AppointmentLimitException(
                 "Patient has reached the maximum limit of 4 bookings per 30 days.");
         }
+    }
 
-        // TODO: NFR-2.5.1 - Validate patient can only book for themselves
-        // This will be implemented when authentication is added
-        // Something like...
-        // if (appointment.PatientId != authenticatedPatientId)
-        //     throw new UnauthorizedException("You can only book appointments for yourself");
+    private async Task ValidatePatientOwnershipAsync(int appointmentPatientId, int userId)
+    {
+        // Get the Patient record for the authenticated user
+        var patient = await _patientRepository.GetByUserIdAsync(userId);
+
+        if (patient == null)
+        {
+            throw new UnauthorizedAccessException("User is not a registered patient.");
+        }
+
+        // Check if they're trying to book for themselves
+        if (patient.Id != appointmentPatientId)
+        {
+            throw new UnauthorizedAccessException("You can only book appointments for yourself.");
+        }
     }
 
     private async Task ValidateTimeSlotAvailabilityAsync(
