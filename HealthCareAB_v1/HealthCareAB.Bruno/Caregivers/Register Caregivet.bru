@@ -1,0 +1,23 @@
+meta {
+  name: Register Caregivet
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5256/api/auth/register-caregiver
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "firstName": "Sune",
+    "lastName": "Sunesson",
+    "email": "sunesunesson@hospital.com",
+    "specialisation": "Diagnostic Medicine",
+    "room": "101",
+    "bio": "Everyone lies.",
+    "password": "Password123!"
+  }
+}

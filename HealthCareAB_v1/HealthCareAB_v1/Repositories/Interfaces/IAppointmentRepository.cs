@@ -8,6 +8,8 @@ public interface IAppointmentRepository
     Task<List<Appointment>> GetByPatientIdAsync(int patientId);
     Task<List<Appointment>> GetByCaregiverIdAsync(int caregiverId);
     Task<List<Appointment>> GetByCaregiverAndDateRangeAsync(int caregiverId, DateTime startDate, DateTime endDate);
+    Task<Appointment?> GetByIdAsync(int id);
+    Task UpdateAsync(Appointment appointment);
 
     Task<int> GetPatientAppointmentCountInLast30DaysAsync(int patientId, DateOnly fromDate);
     Task<bool> HasConflictingAppointmentAsync(

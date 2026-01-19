@@ -39,16 +39,18 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-var scope = app.Services.CreateAsyncScope();
+await using var scope = app.Services.CreateAsyncScope();
 
 RoleManager<IdentityRole<int>> roleManager = scope.ServiceProvider.GetRequiredService<
     RoleManager<IdentityRole<int>>
 >();
-
-bool roleExist = await roleManager.RoleExistsAsync("Patient");
-if (!roleExist)
+string[] roles = { "Patient", "Caregiver", "Admin" };
+foreach (var role in roles)
 {
-    var roleResut = await roleManager.CreateAsync(new IdentityRole<int>("Patient"));
+    if (!await roleManager.RoleExistsAsync(role))
+    {
+        await roleManager.CreateAsync(new IdentityRole<int>(role));
+    }
 }
 
 if (app.Environment.IsDevelopment())
