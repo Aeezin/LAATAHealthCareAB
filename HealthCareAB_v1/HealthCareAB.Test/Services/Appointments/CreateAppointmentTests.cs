@@ -58,6 +58,18 @@ public class CreateAppointmentTests
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1))
             .ReturnsAsync(true);
 
+        // Mock: Patient ownership validation - userId 5 maps to patientId 1
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         // Mock: Patient has 0 bookings in last 30 days
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
@@ -97,7 +109,7 @@ public class CreateAppointmentTests
             .ReturnsAsync(createdAppointment);
 
         // Act
-        var result = await _service.CreateAsync(appointment);
+        var result = await _service.CreateAsync(appointment, userId: 5);
 
         // Assert
         Assert.NotNull(result);
@@ -109,6 +121,7 @@ public class CreateAppointmentTests
         // Verify all mocks were called correctly
         _mockPatientRepo.Verify(r => r.ExistsAsync(1), Times.Once);
         _mockCaregiverRepo.Verify(r => r.ExistsAsync(1), Times.Once);
+        _mockPatientRepo.Verify(r => r.GetByUserIdAsync(5), Times.Once);
         _mockAppointmentRepo.Verify(r => r.CreateAsync(It.IsAny<Appointment>()), Times.Once);
     }
 
@@ -128,7 +141,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Cannot book appointments in the past.", exception.Message);
 
@@ -161,7 +174,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<CaregiverNotFoundException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Caregiver with ID 999 not found.", exception.Message);
 
@@ -192,7 +205,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<PatientNotFoundException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Patient with ID 999 not found.", exception.Message);
 
@@ -220,7 +233,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Appointments must be exactly 30 minutes long.", exception.Message);
 
@@ -243,7 +256,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Appointments must start at :00 or :30 (e.g., 10:00, 10:30).", exception.Message);
 
@@ -266,7 +279,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Appointments must be exactly 30 minutes long.", exception.Message);
     }
@@ -294,6 +307,18 @@ public class CreateAppointmentTests
 
         // Mock: Caregiver exists
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Patient ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
 
         // Mock: Patient has exactly 3 bookings (edge case - should still allow)
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
@@ -331,7 +356,7 @@ public class CreateAppointmentTests
             });
 
         // Act
-        var result = await _service.CreateAsync(appointment);
+        var result = await _service.CreateAsync(appointment, userId: 5);
 
         // Assert
         Assert.NotNull(result);
@@ -357,9 +382,21 @@ public class CreateAppointmentTests
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
 
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Cannot book appointments more than 90 days in advance.", exception.Message);
 
@@ -396,9 +433,21 @@ public class CreateAppointmentTests
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
 
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Appointments must be booked at least 2 hours in advance.", exception.Message);
     }
@@ -421,6 +470,18 @@ public class CreateAppointmentTests
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
 
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         // Mock: Patient already has 4 bookings
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
@@ -428,7 +489,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentLimitException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("Patient has reached the maximum limit of 4 bookings per 30 days.", exception.Message);
 
@@ -454,6 +515,19 @@ public class CreateAppointmentTests
         // Mock: All validations pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -477,7 +551,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentConflictException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("The requested time slot is already booked.", exception.Message);
     }
@@ -499,6 +573,19 @@ public class CreateAppointmentTests
         // Mock: All preliminary checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -509,7 +596,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Contains("has no schedule available for", exception.Message);
     }
@@ -531,6 +618,19 @@ public class CreateAppointmentTests
         // Mock: Preliminary checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -549,14 +649,92 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Contains("outside caregiver's working hours", exception.Message);
     }
 
-    // TODO: Skipping auth test - will implement when authentication is added
-    // [Fact]
-    // public async Task CreateAsync_PatientCanOnlyBookForThemselves_ThrowsUnauthorizedException()
+    #endregion
+
+    #region Ownership Validation Tests
+
+    [Fact]
+    public async Task CreateAsync_WhenPatientTriesToBookForAnotherPatient_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange - Patient 1 (userId 5) tries to book for Patient 2
+        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7));
+        var appointment = new Appointment
+        {
+            PatientId = 2, // Trying to book for patient ID 2
+            CaregiverId = 1,
+            Date = appointmentDate,
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(10, 30)
+        };
+
+        // Mock: Patient 2 exists
+        _mockPatientRepo.Setup(r => r.ExistsAsync(2)).ReturnsAsync(true);
+
+        // Mock: Caregiver exists
+        _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Authenticated user (userId 5) is patient ID 1, not patient ID 2
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.CreateAsync(appointment, userId: 5));
+
+        Assert.Equal("You can only book appointments for yourself.", exception.Message);
+
+        // Verify it stopped before business rules
+        _mockAppointmentRepo.Verify(r => r.GetPatientAppointmentCountInLast30DaysAsync(
+            It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenUserIsNotAPatient_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange - UserId 999 is not a registered patient
+        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(7));
+        var appointment = new Appointment
+        {
+            PatientId = 1,
+            CaregiverId = 1,
+            Date = appointmentDate,
+            StartTime = new TimeOnly(10, 0),
+            EndTime = new TimeOnly(10, 30)
+        };
+
+        // Mock: Patient 1 exists
+        _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Caregiver exists
+        _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: UserId 999 is not a patient (returns null)
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(999))
+            .ReturnsAsync((Patient?)null);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.CreateAsync(appointment, userId: 999));
+
+        Assert.Equal("User is not a registered patient.", exception.Message);
+
+        // Verify it stopped before business rules
+        _mockAppointmentRepo.Verify(r => r.GetPatientAppointmentCountInLast30DaysAsync(
+            It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
+    }
 
     #endregion
 
@@ -582,6 +760,19 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -614,7 +805,7 @@ public class CreateAppointmentTests
             });
 
         // Act
-        var result = await _service.CreateAsync(appointment);
+        var result = await _service.CreateAsync(appointment, userId: 5);
 
         // Assert
         Assert.NotNull(result);
@@ -640,6 +831,19 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -672,7 +876,7 @@ public class CreateAppointmentTests
             });
 
         // Act
-        var result = await _service.CreateAsync(appointment);
+        var result = await _service.CreateAsync(appointment, userId: 5);
 
         // Assert
         Assert.NotNull(result);
@@ -698,6 +902,19 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
+
+        // Mock: Ownership validation
+        _mockPatientRepo.Setup(r => r.GetByUserIdAsync(5))
+            .ReturnsAsync(new Patient
+            {
+                Id = 1,
+                UserId = 5,
+                FirstName = "Joe",
+                LastName = "Patient",
+                DateOfBirth = "1970-01-01",
+                PersonalIdentityNumber = "197001011234"
+            });
+
         _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
@@ -730,7 +947,7 @@ public class CreateAppointmentTests
             });
 
         // Act
-        var result = await _service.CreateAsync(appointment);
+        var result = await _service.CreateAsync(appointment, userId: 5);
 
         // Assert
         Assert.NotNull(result);
@@ -753,7 +970,7 @@ public class CreateAppointmentTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppointmentValidationException>(
-            () => _service.CreateAsync(appointment));
+            () => _service.CreateAsync(appointment, userId: 5));
 
         Assert.Equal("StartTime must be before EndTime.", exception.Message);
 
