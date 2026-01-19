@@ -21,7 +21,29 @@ public class AppointmentRepository : IAppointmentRepository
         return appointment;
     }
 
-    public async Task<int> GetPatientBookingCountInLast30DaysAsync(int patientId, DateOnly fromDate)
+    public async Task<List<Appointment>> GetByPatientIdAsync(int patientId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Caregiver)
+            .Where(a => a.PatientId == patientId)
+            .OrderByDescending(a => a.Date)
+            .ThenBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<List<Appointment>> GetByCaregiverIdAsync(int caregiverId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Include(a => a.Caregiver)
+            .Where(a => a.CaregiverId == caregiverId)
+            .OrderByDescending(a => a.Date)
+            .ThenBy(a => a.StartTime)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetPatientAppointmentCountInLast30DaysAsync(int patientId, DateOnly fromDate)
     {
         return await _context.Appointments
             .Where(a => a.PatientId == patientId

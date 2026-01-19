@@ -27,6 +27,18 @@ public class AppointmentService : IAppointmentService
     public async Task<Appointment> CreateAsync(Appointment appointment)
     {
         ValidateBasicInput(appointment);
+        // Validation: StartTime < EndTime
+        if (appointment.StartTime >= appointment.EndTime)
+        {
+            throw new AppointmentValidationException("StartTime must be before EndTime.");
+        }
+
+        // Validation: Date cannot be in the past
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (appointment.Date < today)
+        {
+            throw new AppointmentValidationException("Cannot book appointments in the past.");
+        }
 
         //  Entity Existence Checks
         await ValidateEntitiesExistAsync(appointment.PatientId, appointment.CaregiverId);
@@ -75,6 +87,32 @@ public class AppointmentService : IAppointmentService
         }
     }
 
+    public async Task<List<Appointment>> GetByUserIdAsync(int userId)
+    {
+        // Try to find Patient for this user
+        var patient = await _patientRepository.GetByUserIdAsync(userId);
+
+        if (patient != null)
+        {
+            return await _appointmentRepository
+                .GetByPatientIdAsync(patient.Id);
+        }
+
+        // Try to find Caregiver for this user
+        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
+
+        if (caregiver != null)
+        {
+            return await _appointmentRepository
+                .GetByCaregiverIdAsync(caregiver.Id);
+        }
+
+        throw new NotFoundException("User profile not found");
+    }
+
+
+
+    // -- HELPER METHODS --
     private async Task ValidateEntitiesExistAsync(int patientId, int caregiverId)
     {
         // Patient exists
@@ -116,7 +154,7 @@ public class AppointmentService : IAppointmentService
         // FR-2.5.5: Patients can book max 4 times per 30 days
         var thirtyDaysAgo = DateOnly.FromDateTime(now.AddDays(-30));
         int bookingCount = await _appointmentRepository
-            .GetPatientBookingCountInLast30DaysAsync(appointment.PatientId, thirtyDaysAgo);
+            .GetPatientAppointmentCountInLast30DaysAsync(appointment.PatientId, thirtyDaysAgo);
 
         if (bookingCount >= 4)
         {

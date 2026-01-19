@@ -18,6 +18,13 @@ public class CaregiverRepository : ICaregiverRepository
         return await _context.Caregivers.AnyAsync(c => c.Id == id);
     }
 
+    public async Task<Caregiver?> SaveAsync(Caregiver caregiver)
+    {
+        _context.Caregivers.Add(caregiver);
+        await _context.SaveChangesAsync();
+        return caregiver;
+    }
+
     public async Task<IEnumerable<Caregiver>> GetAllAsync()
     {
         return await _context.Caregivers.ToListAsync();

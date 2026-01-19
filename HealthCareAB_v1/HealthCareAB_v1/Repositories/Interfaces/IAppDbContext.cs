@@ -1,7 +1,6 @@
-﻿using System;
-using HealthCareAB_v1.Models;
-using HealthCareAB_v1.Models.Entities;
+﻿using HealthCareAB_v1.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HealthCareAB_v1.Repositories.Interfaces
 {
@@ -15,5 +14,9 @@ namespace HealthCareAB_v1.Repositories.Interfaces
         DbSet<Feedback> Feedbacks { get; set; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+        Task<IDbContextTransaction> BeginTransactionAsync(
+            CancellationToken cancellationToken = default
+        );
     }
 }
