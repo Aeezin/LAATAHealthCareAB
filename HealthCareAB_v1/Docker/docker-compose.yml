@@ -5,7 +5,7 @@ services:
     image: postgres:15
     container_name: HealthCareAB
     env_file:
-      - ../HealthCareAB_v1/HealthCareAB_v1/.env
+      - ../HealthCareAB_v1/.env
     
     environment: 
       POSTGRES_USER: ${DB_USER:-postgres} 
