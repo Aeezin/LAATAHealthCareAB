@@ -74,6 +74,12 @@ public class AppointmentService : IAppointmentService
             throw new AppointmentNotFoundException($"Appointment with ID {appointmentId} not found.");
         }
 
+        // Validate Caregiver
+        if (appointment.CaregiverId != caregiver.Id)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to complete this appointment.");
+        }
+
         // Validate Status
         if (appointment.Status != AppointmentStatus.Scheduled)
         {
@@ -87,11 +93,7 @@ public class AppointmentService : IAppointmentService
              throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
         }
 
-        // Validate Caregiver
-        if (appointment.CaregiverId != caregiver.Id)
-        {
-            throw new UnauthorizedAccessException("You are not authorized to complete this appointment.");
-        }
+
 
         // Update
         appointment.Status = AppointmentStatus.Completed;
