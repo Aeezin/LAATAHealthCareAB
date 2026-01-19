@@ -59,7 +59,7 @@ public class CreateAppointmentTests
             .ReturnsAsync(true);
 
         // Mock: Patient has 0 bookings in last 30 days
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -168,7 +168,7 @@ public class CreateAppointmentTests
         // Verify patient check happened but no booking count check
         _mockPatientRepo.Verify(r => r.ExistsAsync(1), Times.Once);
         _mockCaregiverRepo.Verify(r => r.ExistsAsync(999), Times.Once);
-        _mockAppointmentRepo.Verify(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Verify(r => r.GetPatientAppointmentCountInLast30DaysAsync(
             It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
     }
 
@@ -296,7 +296,7 @@ public class CreateAppointmentTests
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
 
         // Mock: Patient has exactly 3 bookings (edge case - should still allow)
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(3);
 
@@ -364,7 +364,7 @@ public class CreateAppointmentTests
         Assert.Equal("Cannot book appointments more than 90 days in advance.", exception.Message);
 
         // Verify it failed before checking booking count
-        _mockAppointmentRepo.Verify(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Verify(r => r.GetPatientAppointmentCountInLast30DaysAsync(
             It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
     }
 
@@ -422,7 +422,7 @@ public class CreateAppointmentTests
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
 
         // Mock: Patient already has 4 bookings
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(4);
 
@@ -454,7 +454,7 @@ public class CreateAppointmentTests
         // Mock: All validations pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -499,7 +499,7 @@ public class CreateAppointmentTests
         // Mock: All preliminary checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -531,7 +531,7 @@ public class CreateAppointmentTests
         // Mock: Preliminary checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -565,8 +565,8 @@ public class CreateAppointmentTests
     [Fact]
     public async Task CreateAsync_Exactly2HoursBefore_CreatesSuccessfully()
     {
-        // Arrange - Use a time 3 hours ahead to safely pass the 2-hour validation
-        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+        // Arrange - Use a time 1 day ahead to safely pass the 2-hour validation
+        var appointmentDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1));
         var startTime = new TimeOnly(14, 0);  // Fixed valid time
         var endTime = new TimeOnly(14, 30);
 
@@ -582,7 +582,7 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -640,7 +640,7 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
@@ -698,7 +698,7 @@ public class CreateAppointmentTests
         // Mock: All checks pass
         _mockPatientRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
         _mockCaregiverRepo.Setup(r => r.ExistsAsync(1)).ReturnsAsync(true);
-        _mockAppointmentRepo.Setup(r => r.GetPatientBookingCountInLast30DaysAsync(
+        _mockAppointmentRepo.Setup(r => r.GetPatientAppointmentCountInLast30DaysAsync(
                 1, It.IsAny<DateOnly>()))
             .ReturnsAsync(0);
 
