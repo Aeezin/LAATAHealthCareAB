@@ -129,9 +129,6 @@ public class AppointmentsController : ControllerBase
     public async Task<IActionResult> GetAvailableTimeSlots(
         [FromQuery] GetAvailableSlotsQuery query)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         if (query.StartDate >= query.EndDate)
             return BadRequest("Start date must be before end date");
 
