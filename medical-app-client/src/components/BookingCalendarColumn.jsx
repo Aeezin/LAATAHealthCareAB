@@ -1,5 +1,5 @@
-import { Stack } from "@mantine/core";
 import styled from "styled-components";
+import { Stack } from "@mantine/core";
 
 const BookingCalendarColumn = styled(Stack)`
   display: flex;
@@ -10,6 +10,7 @@ const BookingCalendarColumn = styled(Stack)`
   background-color: #f9f9f9;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   flex: 1;
+
   @media (max-width: 768px) {
     flex: none;
     width: 100%;

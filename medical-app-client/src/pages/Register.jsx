@@ -10,7 +10,7 @@ import PropTypes from "prop-types";
 import AuthForm from "../components/AuthForm";
 import PrimaryButton from "../components/PrimaryButton";
 
-const REGISTER_URL = "http://localhost:5256/api/Auth/register";
+const REGISTER_URL = "http://localhost:5256/api/Auth/register-patient";
 
 const RegisterContainer = styled(Stack)`
   align-items: center;

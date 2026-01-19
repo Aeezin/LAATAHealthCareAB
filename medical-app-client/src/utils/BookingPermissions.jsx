@@ -1,7 +1,6 @@
-export function getBookingPermissions({ booked, role }) {
+export function getBookingPermissions({ role }) {
   return {
-    canBook: !booked && role === "patient",
-    canEdit: booked && role === "caregiver",
-    canDelete: booked && (role === "caregiver" || role === "patient"),
+    canBook: role === "patient",
+    canDelete: role === "caregiver" || role === "patient"
   };
 }
