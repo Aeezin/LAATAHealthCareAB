@@ -5,7 +5,9 @@ namespace HealthCareAB_v1.Services.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto);
+        Task<AuthResponseDto> RegisterPatientAsync(RegisterDto registerDto);
+
+        Task<AuthResponseDto> RegisterCaregiverAsync(RegisterCaregiverDto registerCaregiverDto);
 
         Task<(AuthResponseDto response, string? token)> LoginPatientAsync(
             string personalIdentityNumber,
