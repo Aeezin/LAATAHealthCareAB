@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { IconHomeFilled, IconUserFilled, IconClockFilled } from "@tabler/icons-react";
 import { useMediaQuery } from "@mantine/hooks";
 import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 const StyledNavbar = styled.nav`
   width: 100%;
@@ -59,20 +60,42 @@ const NavLink = styled(Link)`
 
 function Navbar() {
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const { authState } = useAuth();
+
+  const isAuthenticated = Boolean(authState?.isAuthenticated);
+  const roles = Array.isArray(authState?.roles) ? authState.roles : [];
+
+  const isPatient = roles.includes("Patient");
+  const isCaregiver = roles.includes("Caregiver");
+
+  const clockRoute = isPatient
+    ? "/choose-caregiver"       // Kommer behöva ändra route
+    : isCaregiver
+      ? "/booking"              // Kommer behöva ändra route
+      : null;
 
   return (
     <StyledNavbar>
       {!isMobile && <NavTitle>Health Care AB</NavTitle>}
+
       <NavIcons>
         <NavLink to="/">
           <IconHomeFilled size={28} />
         </NavLink>
-        <NavLink to="/profile">
-          <IconUserFilled size={28} />
-        </NavLink>
-        <NavLink to="/booking">
-          <IconClockFilled size={28} />
-        </NavLink>
+
+        {isAuthenticated && (
+          <>
+            <NavLink to="/profile">
+              <IconUserFilled size={28} />
+            </NavLink>
+
+            {clockRoute && (
+              <NavLink to={clockRoute}>
+                <IconClockFilled size={28} />
+              </NavLink>
+            )}
+          </>
+        )}
       </NavIcons>
     </StyledNavbar>
   );
