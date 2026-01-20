@@ -1,17 +1,11 @@
 import styled from "styled-components";
 import Logo from "../assets/health_care_logo.svg";
 import { Link } from "react-router-dom";
+import { Stack } from "@mantine/core";
 
 // Styled components for home page layout
-const HomeContainer = styled.div`
-  display: flex;
+const HomeContainer = styled(Stack)`
   align-items: center;
-  justify-content: center;
-  flex-direction: column;
-`;
-
-const Title = styled.h1`
-  font-size: 28px;
 `;
 
 // Styled Link component that looks like a button
@@ -26,8 +20,7 @@ const LoginButton = styled(Link)`
   color: #fff;
   margin-top: 3rem;
   text-decoration: none;
-  transition: background-color 0.3s ease, transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     background-color: #2fadaa;
@@ -41,11 +34,13 @@ const LogoContainer = styled.img`
 `;
 
 const Home = () => (
-  <HomeContainer>
-    <LogoContainer src={Logo} alt="Health Care Logo" />
-    <Title>Health Care Appointment App</Title>
-    <LoginButton to="/login">Login</LoginButton>
-  </HomeContainer>
+  <>
+    <HomeContainer>
+      <LogoContainer src={Logo} alt="Health Care Logo" />
+      <LoginButton to="/login?type=patient">Patient Login</LoginButton>
+      <LoginButton to="/login?type=caregiver">Caregiver Login</LoginButton>
+    </HomeContainer>
+  </>
 );
 
 export default Home;

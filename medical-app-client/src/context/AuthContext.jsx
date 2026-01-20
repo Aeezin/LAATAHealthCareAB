@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useContext } from "react";
+import PropTypes from "prop-types";
 
 // Initial authentication state - exported for use in logout functionality
 export const initialAuthState = {
@@ -8,7 +9,7 @@ export const initialAuthState = {
 };
 
 // Authentication context for global auth state management
-export const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
 // Provider component that wraps the app and provides auth state to all children
 export const AuthProvider = ({ children }) => {
@@ -19,4 +20,19 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
