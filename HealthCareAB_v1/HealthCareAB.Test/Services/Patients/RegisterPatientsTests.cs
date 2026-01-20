@@ -32,7 +32,6 @@ namespace HealthCareAB.Test.Services
                 FirstName = "Wa",
                 LastName = "Lee",
                 PhoneNumber = "0700000000",
-                DateOfBirth = "1990-01-01",
                 PersonalIdentityNumber = "19900101-1234",
             };
 
