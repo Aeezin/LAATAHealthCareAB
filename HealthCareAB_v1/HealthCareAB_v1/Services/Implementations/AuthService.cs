@@ -74,7 +74,7 @@ namespace HealthCareAB_v1.Services
                         FirstName = registerDto.FirstName,
                         LastName = registerDto.LastName,
                         PhoneNumber = registerDto.PhoneNumber,
-                        DateOfBirth = registerDto.DateOfBirth,
+                        DateOfBirth = fullPin.Split("-")[0],
                         PersonalIdentityNumber = fullPin,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
