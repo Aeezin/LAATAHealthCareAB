@@ -40,7 +40,7 @@ Test Results: 7/7 passing
 <!-- Example: Implements issue #96: Register Caregiver -->
 
 
-Testing
+### Testing
 All tests passing:
 
 <!-- Example: 7 caregiver registration tests
