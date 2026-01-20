@@ -59,7 +59,6 @@ const NavLink = styled(Link)`
 `;
 
 function Navbar() {
-  const isMobile = useMediaQuery("(max-width: 768px)");
   const { authState } = useAuth();
 
   const isAuthenticated = Boolean(authState?.isAuthenticated);
@@ -68,16 +67,14 @@ function Navbar() {
   const isPatient = roles.includes("Patient");
   const isCaregiver = roles.includes("Caregiver");
 
-  const clockRoute = isPatient
-    ? "/choose-caregiver"       // Kommer behöva ändra route
+  const bookingRoute = isPatient
+    ? "/choose-caregiver"
     : isCaregiver
-      ? "/booking"              // Kommer behöva ändra route
+      ? "/booking"
       : null;
 
   return (
     <StyledNavbar>
-      {!isMobile && <NavTitle>Health Care AB</NavTitle>}
-
       <NavIcons>
         <NavLink to="/">
           <IconHomeFilled size={28} />
@@ -89,8 +86,8 @@ function Navbar() {
               <IconUserFilled size={28} />
             </NavLink>
 
-            {clockRoute && (
-              <NavLink to={clockRoute}>
+            {bookingRoute && (
+              <NavLink to={bookingRoute}>
                 <IconClockFilled size={28} />
               </NavLink>
             )}
