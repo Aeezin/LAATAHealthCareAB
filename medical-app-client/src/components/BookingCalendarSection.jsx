@@ -3,41 +3,40 @@ import PropTypes from "prop-types";
 import BookingSlot from "./BookingSlot";
 import BookingActionsModal from "./BookingActionsModal";
 
-export default function BookingCalendarSection({ booking, role, onBook, onEdit, onDelete }) {
+export default function BookingCalendarSection({ booking, role, onBook, onCancel, variant }) {
   const [open, setOpen] = useState(false);
 
-  return (
+  return variant === "bookings" ? (
     <>
       <BookingSlot
         title={`Caregiver: ${booking.caregiverName}`}
         startTime={booking.startTime}
         endTime={booking.endTime}
         onClick={() => setOpen(true)}
+        variant={variant}
       />
 
-      <BookingActionsModal
-        opened={open}
-        onClose={() => setOpen(false)}
-        role={role}
-        booking={booking}
-        onBook={onBook}
-        onEdit={onEdit}
-        onDelete={onDelete}
+      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onBook={onBook} onCancel={onCancel} />
+    </>
+  ) : (
+    <>
+      <BookingSlot
+        title={role === "patient" ? `Caregiver: ${booking.caregiverName}` : `Patient: ${booking.patientName}`}
+        startTime={booking.startTime}
+        endTime={booking.endTime}
+        onClick={() => setOpen(true)}
+        variant={variant}
       />
+
+      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onBook={onBook} onCancel={onCancel} />
     </>
   );
 }
 
 BookingCalendarSection.propTypes = {
-  booking: PropTypes.shape({
-    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    startTime: PropTypes.string.isRequired,
-    endTime: PropTypes.string.isRequired,
-    caregiverName: PropTypes.string.isRequired,
-    date: PropTypes.string.isRequired,
-  }).isRequired,
+  variant: PropTypes.oneOf(["bookings", "appointments"]).isRequired,
+  booking: PropTypes.object.isRequired,
   role: PropTypes.oneOf(["patient", "caregiver"]).isRequired,
   onBook: PropTypes.func,
-  onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
+  onCancel: PropTypes.func,
 };

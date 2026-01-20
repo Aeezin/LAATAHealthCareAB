@@ -1,46 +1,34 @@
-import { Modal, Stack, Button, Group, Text } from "@mantine/core";
+import { Modal, Stack, Button, Text } from "@mantine/core";
 import PropTypes from "prop-types";
-import { getBookingPermissions } from "../utils/bookingPermissions";
 
-function BookingActionsModal({ opened, onClose, role, booking, onBook, onEdit, onDelete }) {
-  const permissions = getBookingPermissions({ booked: booking.booked, role });
-
-  // Compute time string from start/end
+function BookingActionsModal({ opened, onClose, role, booking, variant, onBook, onCancel }) {
   const time = `${booking.startTime} - ${booking.endTime}`;
 
-  // Title changes depending on role
-  const title =
-    booking.booked && role === "caregiver"
-      ? `Patient: ${booking.patientName || "Unknown"}`
-      : `Caregiver: ${booking.caregiverName}`;
-
   return (
-    <Modal opened={opened} onClose={onClose} title="Booking Details" centered>
+    <Modal opened={opened} onClose={onClose} title={variant === "bookings" ? "Available Slot" : "Appointment Details"} centered>
       <Stack gap="md">
-        <Text>{title}</Text>
+        <Text weight={600}>
+          {variant === "bookings" ? `Caregiver: ${booking.caregiverName}` : `Patient: ${booking.patientName} | Caregiver: ${booking.caregiverName}`}
+        </Text>
+
         <Text>Date: {booking.date}</Text>
         <Text>Time: {time}</Text>
-        {permissions.canBook && (
+
+        {variant === "appointments" && booking.room && <Text>Room: {booking.room}</Text>}
+        {variant === "appointments" && booking.patientNotes && <Text>Patient Notes: {booking.patientNotes}</Text>}
+        {variant === "appointments" && booking.caregiverNotes && <Text>Caregiver Notes: {booking.caregiverNotes}</Text>}
+        {variant === "appointments" && booking.status && <Text>Status: {booking.status}</Text>}
+
+        {variant === "bookings" && (
           <Button color="green" onClick={() => onBook?.(booking)}>
             Book
           </Button>
         )}
-        {(permissions.canEdit || permissions.canDelete) && (
-          <Group grow>
-            {permissions.canEdit && <Button onClick={() => onEdit?.(booking)}>Edit</Button>}
-            {permissions.canDelete && (
-              <Button
-                color="red"
-                onClick={() => {
-                  if (window.confirm("Delete booking?")) {
-                    onDelete?.(booking);
-                  }
-                }}
-              >
-                Delete
-              </Button>
-            )}
-          </Group>
+
+        {variant === "appointments" && (role === "patient" || role === "caregiver") && (
+          <Button color="red" onClick={() => onCancel?.(booking)}>
+            Cancel Appointment
+          </Button>
         )}
       </Stack>
     </Modal>
@@ -51,18 +39,10 @@ BookingActionsModal.propTypes = {
   opened: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   role: PropTypes.oneOf(["patient", "caregiver"]).isRequired,
-  booking: PropTypes.shape({
-    bookingId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    startTime: PropTypes.string.isRequired,
-    endTime: PropTypes.string.isRequired,
-    caregiverName: PropTypes.string.isRequired,
-    patientName: PropTypes.string,
-    booked: PropTypes.bool,
-    date: PropTypes.string.isRequired,
-  }).isRequired,
+  booking: PropTypes.object.isRequired,
+  variant: PropTypes.oneOf(["bookings", "appointments"]).isRequired,
   onBook: PropTypes.func,
-  onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
+  onCancel: PropTypes.func,
 };
 
 export default BookingActionsModal;

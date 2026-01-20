@@ -6,16 +6,16 @@ const Slot = styled(Group)`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background-color: #7cfc8d;
   border-radius: 10px;
   width: 100%;
   padding: 6px;
   cursor: pointer;
+  background-color: ${({ variant }) => (variant === "bookings" ? "#7cfc8d" : "#87cefa")};
 `;
 
-function BookingSlot({ title, startTime, endTime, onClick }) {
+function BookingSlot({ title, startTime, endTime, onClick, variant }) {
   return (
-    <Slot onClick={onClick}>
+    <Slot onClick={onClick} variant={variant}>
       <Text size="xs">{title}</Text>
       <Text size="xs">{`${startTime} - ${endTime}`}</Text>
     </Slot>
@@ -27,6 +27,7 @@ BookingSlot.propTypes = {
   startTime: PropTypes.string.isRequired,
   endTime: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
+  variant: PropTypes.oneOf(["bookings", "appointments"]).isRequired,
 };
 
 export default BookingSlot;

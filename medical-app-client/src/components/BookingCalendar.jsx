@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import styled from "styled-components";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Group, Text, Button, Select, Loader } from "@mantine/core";
+import styled from "styled-components";
+import { Group, Text, Button, Select, Loader, SegmentedControl } from "@mantine/core";
 import BookingCalendarSection from "./BookingCalendarSection";
 import BookingCalendarColumn from "./BookingCalendarColumn";
 
-const BOOKINGS_URL = "http://localhost:5256/api/Bookings/";
-
+// ----- Container -----
 const BookingCalendarContainer = styled(Group)`
   align-items: stretch;
   min-height: calc(100vh - 60px);
@@ -19,7 +19,7 @@ const BookingCalendarContainer = styled(Group)`
 // ----- Helper functions -----
 function getMonday(d) {
   const date = new Date(d);
-  const day = date.getDay(); // Sunday = 0
+  const day = date.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   date.setDate(date.getDate() + diff);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -50,79 +50,76 @@ function getWeekRangeString(weekDates) {
 // ----- Main component -----
 export default function BookingCalendar() {
   const { authState } = useAuth();
-  const role = authState.roles 
-  
+  const role = authState.role || "patient";
+
+  const { caregiverId } = useParams(); // optional caregiver ID
+
   const today = new Date();
-
-  // --- State ---
-  const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(today));
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const maxBookingDate = new Date();
   maxBookingDate.setDate(today.getDate() + 90);
 
-  // --- Fetch bookings ---
+  const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(today));
+  const [view, setView] = useState("appointments");
+  const [bookings, setBookings] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ----- Fetch data using Axios -----
   useEffect(() => {
-    const fetchBookings = async () => {
-      setLoading(true);
+    setLoading(true);
+
+    const fetchData = async () => {
       try {
-        const response = await axios.get(BOOKINGS_URL, { withCredentials: true });
-        // TODO: Implement dynamic data.
-        // setBookings(response.data);
+        if (caregiverId) {
+          // Fetch bookings and appointments for a specific caregiver
+          const [bookingsRes, appointmentsRes] = await Promise.all([
+            axios.get(`/api/bookings/${caregiverId}`, { withCredentials: true }), // cookies if used
+            axios.get(`/api/appointments/${caregiverId}`, { withCredentials: true }),
+          ]);
+
+          setBookings(bookingsRes.data.bookings || []);
+          setAppointments(appointmentsRes.data.appointments || []);
+        } else {
+          // Fetch only appointments (no caregiver selected)
+          const res = await axios.get("/api/appointments", { withCredentials: true });
+          setAppointments(res.data.appointments || []);
+        }
       } catch (error) {
-        console.error("Failed to fetch bookings:", error);
-        // TODO: Remove temp static data.
-        setBookings([
-          {
-            caregiverId: 1,
-            caregiverName: "Anna Andersson",
-            bookings: [
-              {
-                date: "2026-01-20",
-                appointments: [
-                  { startTime: "09:00", endTime: "09:30" },
-                  { startTime: "10:00", endTime: "10:30" },
-                ],
-              },
-              {
-                date: "2026-01-29",
-                appointments: [{ startTime: "14:00", endTime: "14:30" }],
-              },
-            ],
-          },
-        ]);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBookings();
-  }, []);
+    fetchData();
+  }, [caregiverId]);
 
-  // --- Derived data ---
-  const allAppointments = bookings.flatMap((caregiver) =>
-    caregiver.bookings.flatMap((day) =>
-      day.appointments.map((appt, index) => ({
-        id: `${caregiver.caregiverId}-${day.date}-${index}`,
-        caregiverName: caregiver.caregiverName,
-        caregiverId: caregiver.caregiverId,
-        date: day.date,
-        startTime: appt.startTime,
-        endTime: appt.endTime,
-      })),
-    ),
-  );
-
+  // ----- Week dates -----
   const weekDates = getWeekDates(currentWeekStart);
   const weekDateStrings = weekDates.map(formatDate);
-  const weekAppointments = allAppointments.filter((appt) => weekDateStrings.includes(appt.date));
 
-  // --- Week navigation ---
+  const allBookingSlots = bookings.flatMap((caregiver) =>
+    caregiver.bookings.flatMap((day) =>
+      day.appointments.map((slot, index) => ({
+        id: `${caregiver.caregiverId}-${day.date}-${index}`,
+        caregiverId: caregiver.caregiverId,
+        caregiverName: caregiver.caregiverName,
+        date: day.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      }))
+    )
+  );
+
+  const dataForWeek =
+    view === "bookings"
+      ? allBookingSlots.filter((slot) => weekDateStrings.includes(slot.date))
+      : appointments.filter((appt) => weekDateStrings.includes(appt.date));
+
+  // ----- Week navigation -----
   const prevWeek = () => {
     const newMonday = new Date(currentWeekStart);
     newMonday.setDate(newMonday.getDate() - 7);
-
     const lowerBound = getMonday(today);
     if (newMonday >= lowerBound) setCurrentWeekStart(newMonday);
   };
@@ -133,7 +130,6 @@ export default function BookingCalendar() {
     if (newMonday <= maxBookingDate) setCurrentWeekStart(newMonday);
   };
 
-  // --- Dropdown: all Mondays ---
   const allMondays = [];
   let monday = getMonday(today);
   while (monday <= maxBookingDate) {
@@ -141,7 +137,6 @@ export default function BookingCalendar() {
     monday.setDate(monday.getDate() + 7);
   }
 
-  // --- Render ---
   if (loading) {
     return (
       <Group position="center" style={{ minHeight: "80vh" }}>
@@ -153,10 +148,45 @@ export default function BookingCalendar() {
   return (
     <>
       {/* Header */}
-      <Group position="apart" style={{ justifyContent: "center", margin: "10px 0", marginTop: "28px", flexWrap: "wrap", gap: 10 }}>
-        <Button onClick={prevWeek}>Previous Week</Button>
+      <Group
+        position="apart"
+        style={{
+          justifyContent: "center",
+          margin: "10px 0",
+          marginTop: "28px",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <Button
+          onClick={prevWeek}
+          style={{
+            minWidth: "120px",
+            padding: "6px 12px",
+            borderRadius: "6px",
+            backgroundColor: "#057d7a",
+            color: "white",
+            fontWeight: 500,
+            transition: "all 0.2s ease",
+          }}
+        >
+          Previous Week
+        </Button>
         <Text weight={500}>{getWeekRangeString(weekDates)}</Text>
-        <Button onClick={nextWeek}>Next Week</Button>
+        <Button
+          onClick={nextWeek}
+          style={{
+            minWidth: "120px",
+            padding: "6px 12px",
+            borderRadius: "6px",
+            backgroundColor: "#057d7a",
+            color: "white",
+            fontWeight: 500,
+            transition: "all 0.2s ease",
+          }}
+        >
+          Next Week
+        </Button>
 
         <Select
           style={{ minWidth: 200 }}
@@ -164,39 +194,51 @@ export default function BookingCalendar() {
           value={formatDate(currentWeekStart)}
           onChange={(val) => {
             const selected = allMondays.find((d) => formatDate(d) === val);
-            selected && setCurrentWeekStart(selected);
+            if (selected) setCurrentWeekStart(selected);
           }}
           data={allMondays.map((d) => ({
             value: formatDate(d),
             label: getWeekRangeString(getWeekDates(d)),
           }))}
         />
+
+        {/* Toggle for patients only and only if caregiverId exists */}
+        {role === "patient" && caregiverId && (
+          <SegmentedControl
+            value={view}
+            onChange={setView}
+            data={[
+              { label: "Available Slots", value: "bookings" },
+              { label: "Appointments", value: "appointments" },
+            ]}
+            size="md"
+          />
+        )}
       </Group>
 
       {/* Calendar */}
       <BookingCalendarContainer>
         {weekDates.map((date, colIndex) => {
-          const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
           const dateString = formatDate(date);
-          const appointmentsForColumn = weekAppointments.filter((appt) => appt.date === dateString);
+          const dataForColumn = dataForWeek.filter((item) => item.date === dateString);
 
           return (
             <BookingCalendarColumn key={colIndex}>
-              <Text weight={500}>{`${weekday} - ${dateString}`}</Text>
-              {appointmentsForColumn.length > 0 ? (
-                appointmentsForColumn.map((appt) => (
+              <Text weight={500}>
+                {`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}
+              </Text>
+              {dataForColumn.length > 0 ? (
+                dataForColumn.map((item) => (
                   <BookingCalendarSection
-                    key={appt.id}
-                    booking={appt}
+                    key={item.id}
+                    booking={item}
                     role={role}
-                    onBook={(b) => console.log("Book", b)}
-                    onEdit={(b) => console.log("Edit", b)}
-                    onDelete={(b) => console.log("Delete", b)}
+                    variant={view}
                   />
                 ))
               ) : (
                 <Text size="xs" c="dimmed">
-                  No bookings
+                  No {view === "bookings" ? "available slots" : "appointments"}
                 </Text>
               )}
             </BookingCalendarColumn>
