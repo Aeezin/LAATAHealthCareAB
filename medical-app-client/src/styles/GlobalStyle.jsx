@@ -4,7 +4,7 @@ import { createGlobalStyle } from "styled-components";
 const GlobalStyle = createGlobalStyle`
   
   /* Desktop */
-  .mantine-Stack-root {
+  .content {
     padding-top: 60px;
   }
   
@@ -28,7 +28,7 @@ const GlobalStyle = createGlobalStyle`
   /* Mobile */
 
   @media (max-width: 768px) {
-    .mantine-Stack-root {
+    .content {
       padding-top: 0;
       padding-bottom: 80px;
     }

@@ -1,13 +1,11 @@
 import styled from "styled-components";
 import Logo from "../assets/health_care_logo.svg";
 import { Link } from "react-router-dom";
+import { Stack } from "@mantine/core";
 
 // Styled components for home page layout
-const HomeContainer = styled.div`
-  display: flex;
+const HomeContainer = styled(Stack)`
   align-items: center;
-  justify-content: center;
-  flex-direction: column;
 `;
 
 // Styled Link component that looks like a button

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mantine/core": "^8.3.11",
+    "@mantine/dates": "^8.3.11",
     "@mantine/hooks": "^8.3.11",
     "@tabler/icons-react": "^3.36.1",
     "axios": "^1.7.7",
