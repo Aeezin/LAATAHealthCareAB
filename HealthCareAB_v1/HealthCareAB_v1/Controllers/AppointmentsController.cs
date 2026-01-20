@@ -6,7 +6,7 @@ using HealthCareAB_v1.Models.Entities;
 
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using HealthCareAB_v1.Models.DTOs.Appointment;
+
 
 namespace HealthCareAB_v1.Controllers;
 

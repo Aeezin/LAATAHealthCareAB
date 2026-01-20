@@ -1,6 +1,6 @@
 using HealthCareAB_v1.Models.DTOs;
 using HealthCareAB_v1.Models.Entities;
-using HealthCareAB_v1.Models.DTOs.Appointment;
+
 
 namespace HealthCareAB_v1.Services.Interfaces;
 
