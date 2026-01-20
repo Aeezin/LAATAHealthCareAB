@@ -12,11 +12,7 @@ High-level changes
 
 ### New / updated components:
 
-<<<<<<< HEAD
-<!-- Example:
-=======
 <!-- Example: 
->>>>>>> da5fb207385841979a393a8691388ee259638db4
 Main view component (application layout, header/navigation, landing page (simple))
 Any shared layout primitives (NavBar, AppShell, LayoutContainer)
 
@@ -26,11 +22,7 @@ How to test -->
 
 ### Fetch and checkout the branch:
 
-<<<<<<< HEAD
-<!-- Example:
-=======
 <!-- Example: 
->>>>>>> da5fb207385841979a393a8691388ee259638db4
 git fetch origin
 git checkout 43-feature/ui-main-view
 Install dependencies:
@@ -39,10 +31,6 @@ Start the app:
 npm run dev -->
 
 ### Verify Main view:
-<<<<<<< HEAD
-
-=======
->>>>>>> da5fb207385841979a393a8691388ee259638db4
 <!--Visit root route (e.g. / or configured main route)
 Confirm header/navigation render and work
 Confirm layout adapts for different viewport sizes
