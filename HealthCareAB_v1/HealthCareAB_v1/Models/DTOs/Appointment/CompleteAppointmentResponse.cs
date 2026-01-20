@@ -1,6 +1,6 @@
 using HealthCareAB_v1.Models.Enums;
 
-namespace HealthCareAB_v1.Models.DTOs.Appointment;
+namespace HealthCareAB_v1.Models.DTOs;
 
 public class CompleteAppointmentResponse
 {

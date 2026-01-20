@@ -197,8 +197,6 @@ public class AppointmentService : IAppointmentService
             throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
         }
 
-
-
         // Update
         appointment.Status = AppointmentStatus.Completed;
         if (!string.IsNullOrEmpty(dto.CaregiverNotes))
@@ -208,6 +206,58 @@ public class AppointmentService : IAppointmentService
         appointment.UpdatedAt = DateTime.UtcNow;
 
         await _appointmentRepository.UpdateAsync(appointment);
+
+        return appointment;
+    }
+
+    public async Task<Appointment> CancelAppointmentAsync(int appointmentId, int userId)
+    {
+        var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
+        if (appointment == null)
+        {
+            throw new AppointmentNotFoundException($"Appointment with ID {appointmentId} not found.");
+        }
+
+        // Check if user is Patient or Caregiver related to this appointment
+        var patient = await _patientRepository.GetByUserIdAsync(userId);
+        var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
+
+        bool isPatient = patient != null && patient.Id == appointment.PatientId;
+        bool isCaregiver = caregiver != null && caregiver.Id == appointment.CaregiverId;
+
+        if (!isPatient && !isCaregiver)
+        {
+            throw new UnauthorizedAccessException("You are not authorized to cancel this appointment.");
+        }
+
+        // Validate Status - Cannot cancel if already cancelled or completed
+        if (appointment.Status != AppointmentStatus.Scheduled)
+        {
+            throw new AppointmentValidationException($"Cannot cancel appointment with status '{appointment.Status}'. Only 'Scheduled' appointments can be cancelled.");
+        }
+
+        if (isPatient)
+        {
+            // Patients can cancel appointments at least 1 hour before the scheduled time.
+            var appointmentDateTime = appointment.Date.ToDateTime(appointment.StartTime);
+            if (DateTime.UtcNow > appointmentDateTime.AddHours(-1))
+            {
+                throw new AppointmentValidationException("Appointments can only be cancelled up to 1 hour before the scheduled time.");
+            }
+
+            // For patients, delete appointment.
+            await _appointmentRepository.DeleteAsync(appointmentId);
+
+            // Return the object as it was before deletion (but functionally cancelled)
+            appointment.Status = AppointmentStatus.Cancelled; // Mark as cancelled in memory for the response
+        }
+        else if (isCaregiver)
+        {
+            // When a caregiver cancels an appointment, the appointment marks as cancelled.
+            appointment.Status = AppointmentStatus.Cancelled;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _appointmentRepository.UpdateAsync(appointment);
+        }
 
         return appointment;
     }
