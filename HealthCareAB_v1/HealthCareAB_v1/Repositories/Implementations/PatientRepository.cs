@@ -20,23 +20,23 @@ public class PatientRepository : IPatientRepository
 
     public async Task<IEnumerable<Patient>> GetAllAsync()
     {
-        return await _context.Patients.ToListAsync();
+        return await _context.Patients.Include(p => p.User).ToListAsync();
     }
 
     public async Task<Patient?> GetByIdAsync(int id)
     {
-        return await _context.Patients.FirstOrDefaultAsync(c => c.Id == id);
+        return await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<Patient?> GetByPersonalIdentityNumberAsync(string personalIdentityNumber)
     {
-        return await _context.Patients.FirstOrDefaultAsync(p =>
+        return await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p =>
             p.PersonalIdentityNumber == personalIdentityNumber
         );
     }
 
     public async Task<Patient?> GetByUserIdAsync(int userId)
     {
-        return await _context.Patients.FirstOrDefaultAsync(c => c.UserId == userId);
+        return await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(c => c.UserId == userId);
     }
 }
