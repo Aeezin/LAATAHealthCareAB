@@ -38,7 +38,6 @@ jobs:
                     /d:sonar.host.url="https://sonarcloud.io" \
                     /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
                     /d:sonar.exclusions="**/bin/**,**/obj/**" \
-                    /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml" \
                     /d:sonar.qualitygate.wait=false
 
             - name: Build
@@ -49,9 +48,8 @@ jobs:
                   dotnet test HealthCareAB_v1/HealthCareAB.Test --no-build --verbosity normal \
                       /p:CollectCoverage=true \
                       /p:CoverletOutputFormat=opencover \
-                      /p:CoverletOutput=./TestResults/coverage.opencover.xml \
+                      /p:CoverletOutput=./TestResults/ \
                       /p:Threshold=80 \
-                      /p:ThresholdStat=total \
                       /p:ThresholdType=line
 
             - name: End SonarCloud Analysis
