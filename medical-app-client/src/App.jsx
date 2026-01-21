@@ -14,6 +14,7 @@ import { Stack } from "@mantine/core";
 import BookingView from "./pages/BookingView";
 import ChooseCaregiver from "./pages/ChooseCaregiver";
 import PatientProfile from "./pages/PatientProfile";
+import CaregiverProfile from "./pages/CaregiverProifle";
 
 // AuthProvider must wrap Router to ensure auth state is available to all routes
 function App() {
@@ -35,8 +36,10 @@ function App() {
           {/* TEMP PUBLIC MOVE TO PROTECTED LATER */}
           <Route path="/booking" element={<BookingView />} />
           <Route path="/booking/:caregiverId" element={<BookingView />} />
-          <Route path="/profile"
+          <Route path="/profile-patient"
             element={<PatientProfile />} />
+          <Route path="/profile-caregiver"
+            element={<CaregiverProfile />} />
 
           {/* Protected routes - require authentication and specific roles */}
           <Route

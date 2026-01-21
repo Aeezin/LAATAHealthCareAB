@@ -11,27 +11,27 @@ const GET_URL_CAREGIVERS = "http://localhost:5256/api/Caregivers";
 const ChoosePatientContainer = styled(Stack)` align-items: center; padding 600px `;
 
 
-const PatientCard = styled(UnstyledButton)` transition: transform 0.2s, box-shadow 0.2s; border-radius: 8px;    &:hover {
+const CaregiverCard = styled(UnstyledButton)` transition: transform 0.2s, box-shadow 0.2s; border-radius: 8px;    &:hover {
         transform: translateY(-4px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 `;
 
-const PatientProfileContainer = styled(Stack)`
+const CaregiverProfileContainer = styled(Stack)`
     align-items: center;
     padding: 2rem;
 `;
 
 
 
-function PatientProfile() {
+function CaregiverProfile() {
     const [caregiver, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const { authState: { user, entityId, roles } } = useAuth();
     useEffect(() => {
-        const fetchPatientProfile = async () => {
+        const fetchCaregiverProfile = async () => {
             if (!entityId) {
                 setError("No patient ID found");
                 setLoading(false);
@@ -48,7 +48,7 @@ function PatientProfile() {
                 setLoading(false);
             }
         };
-        fetchPatientProfile();
+        fetchCaregiverProfile();
     }, [entityId]);
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
@@ -81,10 +81,7 @@ function PatientProfile() {
                     <strong>Email:</strong> {caregiver.email || "Not available"}
                 </Text>
                 <Text size="sm" mb="xl">
-                    <strong>Date of birth:</strong> {caregiver.dateOfBirth || "Not available"}
-                </Text>
-                <Text size="sm" mb="xl">
-                    <strong>Specialization</strong> {caregiver.specialization || "Not available"}
+                    <strong>Specialisation</strong> {caregiver.specialisation  || "Not available"}
                 </Text>
                 <Text size="sm" mb="xl">
                     <strong>Room</strong> {caregiver.room || "Not available"}
@@ -103,4 +100,4 @@ function PatientProfile() {
         </CaregiverProfileContainer >
     );
 }
-export default PatientProfile;
+export default CaregiverProfile;
