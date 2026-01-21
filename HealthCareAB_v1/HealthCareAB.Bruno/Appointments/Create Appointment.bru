@@ -1,0 +1,22 @@
+meta {
+  name: Create Appointment
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5256/api/appointments
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "patientId": 1,
+    "caregiverId": 1,
+    "date": "2026-02-19",
+    "startTime": "11:00:00",
+    "endTime": "11:30:00",
+    "patientNotes": "Standard Checkup test2"
+  }
+}

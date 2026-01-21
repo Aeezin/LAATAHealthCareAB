@@ -74,7 +74,7 @@ namespace HealthCareAB_v1.Services
                         FirstName = registerDto.FirstName,
                         LastName = registerDto.LastName,
                         PhoneNumber = registerDto.PhoneNumber,
-                        DateOfBirth = registerDto.DateOfBirth,
+                        DateOfBirth = fullPin.Split("-")[0],
                         PersonalIdentityNumber = fullPin,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
@@ -254,6 +254,7 @@ namespace HealthCareAB_v1.Services
                     FirstName = patient.FirstName,
                     LastName = patient.LastName,
                     Roles = roles.ToList(),
+                    EntityId = patient.Id,
                 },
                 token
             );
@@ -343,6 +344,7 @@ namespace HealthCareAB_v1.Services
                     FirstName = caregiver.FirstName,
                     LastName = caregiver.LastName,
                     Roles = roles.ToList(),
+                    EntityId = caregiver.Id,
                 },
                 token
             );
@@ -389,7 +391,9 @@ namespace HealthCareAB_v1.Services
             {
                 if (!char.IsDigit(normalized[i]))
                 {
-                    throw new ArgumentException("Personal identity number must contain only digits.");
+                    throw new ArgumentException(
+                        "Personal identity number must contain only digits."
+                    );
                 }
             }
 

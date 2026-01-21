@@ -70,6 +70,7 @@ public class AuthService_LoginPatient_Tests
         Assert.Equal("Doe", response.LastName);
         Assert.Contains("Patient", response.Roles);
         Assert.Equal(expectedToken, token);
+        Assert.Equal(1, response.EntityId);
     }
 
     #endregion

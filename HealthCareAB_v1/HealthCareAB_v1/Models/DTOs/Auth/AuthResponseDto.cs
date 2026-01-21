@@ -10,6 +10,8 @@
         public string? LastName { get; set; }
         public List<string> Roles { get; set; }
 
+        public int? EntityId { get; set; }
+
         public bool IsLockedOut { get; set; }
     }
 }

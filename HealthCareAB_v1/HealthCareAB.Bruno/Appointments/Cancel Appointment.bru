@@ -1,0 +1,11 @@
+meta {
+  name: Cancel Appointment
+  type: http
+  seq: 3
+}
+
+put {
+  url: http://localhost:5256/api/appointments/cancel/4
+  body: json
+  auth: inherit
+}
