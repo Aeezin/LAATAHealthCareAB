@@ -47,12 +47,42 @@ function getWeekRangeString(weekDates) {
   return `${start} - ${end}`;
 }
 
+function normalizeAvailableSlotsResponse(apiData) {
+  if (!apiData || !Array.isArray(apiData.availableSlots)) return [];
+
+  return [
+    {
+      caregiverId: apiData.caregiverId,
+      caregiverName: apiData.caregiverName,
+      bookings: apiData.availableSlots.map((day) => ({
+        date: day.date.split("T")[0], // ISO → YYYY-MM-DD
+        appointments: day.timeSlots.map((slot) => ({
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        })),
+      })),
+    },
+  ];
+}
+
+function normalizeAppointmentsResponse(apiData) {
+  if (!apiData) return [];
+
+  if (Array.isArray(apiData)) return apiData;
+  if (Array.isArray(apiData.appointments)) return apiData.appointments;
+
+  console.warn("Unexpected appointments response shape:", apiData);
+  return [];
+}
+
 // ----- Main component -----
 export default function BookingCalendar() {
   const { authState } = useAuth();
   const role = authState.role || "patient";
+  const userId = authState.user.id;
+  console.log(authState.user)
 
-  const { caregiverId } = useParams(); // optional caregiver ID
+  const { caregiverId } = useParams();
 
   const today = new Date();
   const maxBookingDate = new Date();
@@ -71,18 +101,26 @@ export default function BookingCalendar() {
     const fetchData = async () => {
       try {
         if (caregiverId) {
-          // Fetch bookings and appointments for a specific caregiver
           const [bookingsRes, appointmentsRes] = await Promise.all([
-            axios.get(`/api/bookings/${caregiverId}`, { withCredentials: true }), // cookies if used
-            axios.get(`/api/appointments/${caregiverId}`, { withCredentials: true }),
+            axios.get("http://localhost:5256/api/Appointments/available-slots", {
+              params: {
+                CaregiverId: caregiverId,
+                StartDate: today.toISOString(),
+                EndDate: maxBookingDate.toISOString(),
+              },
+              withCredentials: true,
+            }),
+            axios.get("http://localhost:5256/api/appointments", { withCredentials: true }),
           ]);
 
-          setBookings(bookingsRes.data.bookings || []);
-          setAppointments(appointmentsRes.data.appointments || []);
+          const normalizedBookings = normalizeAvailableSlotsResponse(bookingsRes.data);
+          const normalizedAppointments = normalizeAppointmentsResponse(appointmentsRes.data);
+
+          setBookings(normalizedBookings);
+          setAppointments(normalizedAppointments);
         } else {
-          // Fetch only appointments (no caregiver selected)
           const res = await axios.get("/api/appointments", { withCredentials: true });
-          setAppointments(res.data.appointments || []);
+          setAppointments(normalizeAppointmentsResponse(res.data));
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -107,8 +145,8 @@ export default function BookingCalendar() {
         date: day.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
-      }))
-    )
+      })),
+    ),
   );
 
   const dataForWeek =
@@ -137,6 +175,56 @@ export default function BookingCalendar() {
     monday.setDate(monday.getDate() + 7);
   }
 
+  // ----- Appointment API calls -----
+  const createAppointment = async (slot) => {
+    try {
+      const payload = {
+        patientId: userId,        // logged-in patient
+        caregiverId: slot.caregiverId,
+        date: slot.date,          // "YYYY-MM-DD"
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        patientNotes: null,
+      };
+
+      const res = await axios.post(
+        "http://localhost:5256/api/appointments",
+        payload,
+        { withCredentials: true }
+      );
+
+      // Add to local state
+      setAppointments((prev) => [...prev, res.data]);
+      alert("Appointment created successfully!");
+    } catch (err) {
+      console.error("Failed to create appointment", err);
+      alert(err.response?.data?.error ?? "Could not create appointment");
+    }
+  };
+
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      const res = await axios.put(
+        `http://localhost:5256/api/appointments/cancel/${appointmentId}`,
+        {},
+        { withCredentials: true }
+      );
+
+      // Update local state
+      setAppointments((prev) =>
+        prev.map((a) =>
+          a.id === appointmentId
+            ? { ...a, status: res.data.status }
+            : a
+        )
+      );
+      alert("Appointment cancelled successfully!");
+    } catch (err) {
+      console.error("Failed to cancel appointment", err);
+      alert(err.response?.data?.message ?? "Could not cancel appointment");
+    }
+  };
+
   if (loading) {
     return (
       <Group position="center" style={{ minHeight: "80vh" }}>
@@ -148,45 +236,10 @@ export default function BookingCalendar() {
   return (
     <>
       {/* Header */}
-      <Group
-        position="apart"
-        style={{
-          justifyContent: "center",
-          margin: "10px 0",
-          marginTop: "28px",
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <Button
-          onClick={prevWeek}
-          style={{
-            minWidth: "120px",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            backgroundColor: "#057d7a",
-            color: "white",
-            fontWeight: 500,
-            transition: "all 0.2s ease",
-          }}
-        >
-          Previous Week
-        </Button>
+      <Group position="apart" style={{ justifyContent: "center", margin: "28px 0 10px", flexWrap: "wrap", gap: 10 }}>
+        <Button onClick={prevWeek}>Previous Week</Button>
         <Text weight={500}>{getWeekRangeString(weekDates)}</Text>
-        <Button
-          onClick={nextWeek}
-          style={{
-            minWidth: "120px",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            backgroundColor: "#057d7a",
-            color: "white",
-            fontWeight: 500,
-            transition: "all 0.2s ease",
-          }}
-        >
-          Next Week
-        </Button>
+        <Button onClick={nextWeek}>Next Week</Button>
 
         <Select
           style={{ minWidth: 200 }}
@@ -202,7 +255,6 @@ export default function BookingCalendar() {
           }))}
         />
 
-        {/* Toggle for patients only and only if caregiverId exists */}
         {role === "patient" && caregiverId && (
           <SegmentedControl
             value={view}
@@ -211,7 +263,6 @@ export default function BookingCalendar() {
               { label: "Available Slots", value: "bookings" },
               { label: "Appointments", value: "appointments" },
             ]}
-            size="md"
           />
         )}
       </Group>
@@ -224,9 +275,8 @@ export default function BookingCalendar() {
 
           return (
             <BookingCalendarColumn key={colIndex}>
-              <Text weight={500}>
-                {`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}
-              </Text>
+              <Text weight={500}>{`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}</Text>
+
               {dataForColumn.length > 0 ? (
                 dataForColumn.map((item) => (
                   <BookingCalendarSection
@@ -234,6 +284,8 @@ export default function BookingCalendar() {
                     booking={item}
                     role={role}
                     variant={view}
+                    onBook={() => createAppointment(item)}
+                    onCancel={() => cancelAppointment(item.id)}
                   />
                 ))
               ) : (

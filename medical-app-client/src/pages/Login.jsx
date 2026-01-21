@@ -80,9 +80,9 @@ function Login() {
         // navigate("/admin/dashboard", { replace: true });
         throw new Error("Admin login not implemented yet");
       } else if (roles.includes("Patient")) {
-        navigate("/patient/dashboard", { replace: true });
+        navigate("/", { replace: true });
       } else if (roles.includes("Caregiver")) {
-        navigate("/caregiver/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (error) {
       console.error("Login failed:", error.response || error);
