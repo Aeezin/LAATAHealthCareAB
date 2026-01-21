@@ -399,7 +399,7 @@ namespace HealthCareAB_v1.Services
         /// <inheritdoc />
         public CookieOptions GetJwtCookieOptions()
         {
-            return new CookieOptions
+            return new CookieOptions 
             {
                 HttpOnly = true,
                 Secure = !_isDevelopment,
