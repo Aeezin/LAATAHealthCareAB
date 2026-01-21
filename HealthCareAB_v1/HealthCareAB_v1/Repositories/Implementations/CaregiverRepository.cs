@@ -27,16 +27,16 @@ public class CaregiverRepository : ICaregiverRepository
 
     public async Task<IEnumerable<Caregiver>> GetAllAsync()
     {
-        return await _context.Caregivers.ToListAsync();
+        return await _context.Caregivers.Include(c => c.User).ToListAsync();
     }
 
     public async Task<Caregiver?> GetByIdAsync(int id)
     {
-        return await _context.Caregivers.FirstOrDefaultAsync(c => c.Id == id);
+        return await _context.Caregivers.Include(c => c.User).FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<Caregiver?> GetByUserIdAsync(int userId)
     {
-        return await _context.Caregivers.FirstOrDefaultAsync(c => c.UserId == userId);
+        return await _context.Caregivers.Include(c => c.User).FirstOrDefaultAsync(c => c.UserId == userId);
     }
 }
