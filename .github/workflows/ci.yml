@@ -39,6 +39,7 @@ jobs:
                     /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
                     /d:sonar.exclusions="**/bin/**,**/obj/**" \
                     /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml" \
+                    /d:sonar.coverage.exclusions="**/medical-app-client/**,**/*.ts,**/*.tsx,**/*.js,**/*.jsx" \
                     /d:sonar.qualitygate.wait=false
 
             - name: Build
