@@ -1,12 +1,10 @@
-using HealthCareAB_v1.Services.Interfaces;
-using HealthCareAB_v1.Models.DTOs;
-using Microsoft.AspNetCore.Mvc;
-using HealthCareAB_v1.Exceptions;
-using HealthCareAB_v1.Models.Entities;
-
-using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-
+using HealthCareAB_v1.Exceptions;
+using HealthCareAB_v1.Models.DTOs;
+using HealthCareAB_v1.Models.Entities;
+using HealthCareAB_v1.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HealthCareAB_v1.Controllers;
 
@@ -20,7 +18,6 @@ public class AppointmentsController : ControllerBase
     {
         _appointmentService = appointmentService;
     }
-
 
     [HttpPost]
     [Authorize(Roles = "Patient")] // Should Caregivers be able to Create an appointment for a patient? TBD.
@@ -40,7 +37,7 @@ public class AppointmentsController : ControllerBase
                 Date = req.Date,
                 StartTime = req.StartTime,
                 EndTime = req.EndTime,
-                PatientNotes = req.PatientNotes
+                PatientNotes = req.PatientNotes,
             };
 
             var created = await _appointmentService.CreateAsync(appointment, userId);
@@ -55,7 +52,7 @@ public class AppointmentsController : ControllerBase
                 EndTime = created.EndTime,
                 PatientNotes = created.PatientNotes,
                 CaregiverNotes = created.CaregiverNotes,
-                Status = created.Status
+                Status = created.Status,
             };
 
             // Uncomment when GET endpoint has been added:
@@ -111,23 +108,25 @@ public class AppointmentsController : ControllerBase
         {
             var appointments = await _appointmentService.GetByUserIdAsync(userId);
 
-            var responses = appointments.Select(a => new AppointmentResponse
-            {
-                Id = a.Id,
-                PatientId = a.PatientId,
-                CaregiverId = a.CaregiverId,
-                Date = a.Date,
-                StartTime = a.StartTime,
-                EndTime = a.EndTime,
-                Status = a.Status,
-                PatientNotes = a.PatientNotes,
-                CaregiverNotes = a.CaregiverNotes,
+            var responses = appointments
+                .Select(a => new AppointmentResponse
+                {
+                    Id = a.Id,
+                    PatientId = a.PatientId,
+                    CaregiverId = a.CaregiverId,
+                    Date = a.Date,
+                    StartTime = a.StartTime,
+                    EndTime = a.EndTime,
+                    Status = a.Status,
+                    PatientNotes = a.PatientNotes,
+                    CaregiverNotes = a.CaregiverNotes,
 
-                CaregiverName = $"{a.Caregiver?.FirstName} {a.Caregiver?.LastName}",
-                CaregiverSpecialisation = a.Caregiver?.Specialisation,
-                Room = a.Caregiver?.Room,
-                PatientName = $"{a.Patient?.FirstName} {a.Patient?.LastName}"
-            }).ToList();
+                    CaregiverName = $"{a.Caregiver?.FirstName} {a.Caregiver?.LastName}",
+                    CaregiverSpecialisation = a.Caregiver?.Specialisation,
+                    Room = a.Caregiver?.Room,
+                    PatientName = $"{a.Patient?.FirstName} {a.Patient?.LastName}",
+                })
+                .ToList();
 
             return Ok(responses);
         }
@@ -143,8 +142,7 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("available-slots")]
     [Authorize]
-    public async Task<IActionResult> GetAvailableTimeSlots(
-        [FromQuery] GetAvailableSlotsQuery query)
+    public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] GetAvailableSlotsQuery query)
     {
         if (query.StartDate >= query.EndDate)
             return BadRequest("Start date must be before end date");
@@ -155,7 +153,8 @@ public class AppointmentsController : ControllerBase
         var availableSlots = await _appointmentService.GetAvailableTimeSlotsAsync(
             query.CaregiverId,
             query.StartDate,
-            query.EndDate);
+            query.EndDate
+        );
 
         return Ok(availableSlots);
     }
@@ -190,7 +189,7 @@ public class AppointmentsController : ControllerBase
                 EndTime = appointment.EndTime,
                 PatientNotes = appointment.PatientNotes,
                 CaregiverNotes = appointment.CaregiverNotes,
-                Status = appointment.Status
+                Status = appointment.Status,
             };
 
             return Ok(response);
@@ -209,7 +208,10 @@ public class AppointmentsController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while completing the appointment." });
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { message = "An error occurred while completing the appointment." }
+            );
         }
     }
 
@@ -238,7 +240,7 @@ public class AppointmentsController : ControllerBase
             {
                 Id = appointment.Id,
                 Status = appointment.Status,
-                CancelledAt = DateTime.UtcNow
+                CancelledAt = DateTime.UtcNow,
             };
 
             return Ok(response);
@@ -257,7 +259,10 @@ public class AppointmentsController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while cancelling the appointment." });
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new { message = "An error occurred while cancelling the appointment." }
+            );
         }
     }
 }

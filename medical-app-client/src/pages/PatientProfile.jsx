@@ -84,8 +84,9 @@ function PatientProfile() {
                 </Text>
 
                 <Text size="sm" mb="xl">
-                    <strong>Address:</strong> {patient.address || "Not available"}
+                    <strong>Email:</strong> {patient. || "Not available"}
                 </Text>
+
                 <Link key={patient.id} to={"/booking/"} >
                     <Button fullWidth mb="sm">
                         Your Appointments

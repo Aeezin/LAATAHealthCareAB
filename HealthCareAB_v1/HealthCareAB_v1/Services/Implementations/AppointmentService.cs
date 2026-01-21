@@ -1,9 +1,9 @@
-using HealthCareAB_v1.Repositories.Interfaces;
-using HealthCareAB_v1.Services.Interfaces;
-using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Exceptions;
 using HealthCareAB_v1.Models.DTOs;
+using HealthCareAB_v1.Models.Entities;
 using HealthCareAB_v1.Models.Enums;
+using HealthCareAB_v1.Repositories.Interfaces;
+using HealthCareAB_v1.Services.Interfaces;
 
 namespace HealthCareAB_v1.Services.Implementations;
 
@@ -18,7 +18,8 @@ public class AppointmentService : IAppointmentService
         IAppointmentRepository appointmentRepository,
         IPatientRepository patientRepository,
         ICaregiverRepository caregiverRepository,
-        ICaregiverScheduleRepository scheduleRepository)
+        ICaregiverScheduleRepository scheduleRepository
+    )
     {
         _appointmentRepository = appointmentRepository;
         _patientRepository = patientRepository;
@@ -53,7 +54,8 @@ public class AppointmentService : IAppointmentService
             appointment.CaregiverId,
             appointment.Date,
             appointment.StartTime,
-            appointment.EndTime);
+            appointment.EndTime
+        );
 
         return await _appointmentRepository.CreateAsync(appointment);
     }
@@ -65,8 +67,7 @@ public class AppointmentService : IAppointmentService
 
         if (patient != null)
         {
-            return await _appointmentRepository
-                .GetByPatientIdAsync(patient.Id);
+            return await _appointmentRepository.GetByPatientIdAsync(patient.Id);
         }
 
         // Try to find Caregiver for this user
@@ -74,14 +75,17 @@ public class AppointmentService : IAppointmentService
 
         if (caregiver != null)
         {
-            return await _appointmentRepository
-                .GetByCaregiverIdAsync(caregiver.Id);
+            return await _appointmentRepository.GetByCaregiverIdAsync(caregiver.Id);
         }
 
         throw new NotFoundException("User profile not found");
     }
 
-    public async Task<AvailableTimeSlotsResponse> GetAvailableTimeSlotsAsync(int caregiverId, DateTime startDate, DateTime endDate)
+    public async Task<AvailableTimeSlotsResponse> GetAvailableTimeSlotsAsync(
+        int caregiverId,
+        DateTime startDate,
+        DateTime endDate
+    )
     {
         // Get Caregiver
         var caregiver = await _caregiverRepository.GetByIdAsync(caregiverId);
@@ -111,7 +115,7 @@ public class AppointmentService : IAppointmentService
             {
                 CaregiverId = caregiverId,
                 CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
-                AvailableSlots = new List<DailyAvailability>()
+                AvailableSlots = new List<DailyAvailability>(),
             };
         }
 
@@ -124,15 +128,18 @@ public class AppointmentService : IAppointmentService
             {
                 CaregiverId = caregiverId,
                 CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
-                AvailableSlots = new List<DailyAvailability>()
+                AvailableSlots = new List<DailyAvailability>(),
             };
         }
 
         // Expand schedules into concrete time slots
         var allPotentialSlots = ExpandSchedulesToTimeSlots(schedules, startDate, endDate);
 
-        var existingAppointments = await _appointmentRepository
-            .GetByCaregiverAndDateRangeAsync(caregiverId, startDate, endDate);
+        var existingAppointments = await _appointmentRepository.GetByCaregiverAndDateRangeAsync(
+            caregiverId,
+            startDate,
+            endDate
+        );
 
         // Filter out conflicts with existing appointments
         var availableSlots = FilterOutConflicts(allPotentialSlots, existingAppointments);
@@ -143,13 +150,14 @@ public class AppointmentService : IAppointmentService
             .Select(group => new DailyAvailability
             {
                 Date = group.Key.ToDateTime(TimeOnly.MinValue),
-                TimeSlots = group.Select(slot => new TimeSlotDto
-                {
-                    StartTime = slot.StartTime,
-                    EndTime = slot.EndTime
-                })
-                .OrderBy(ts => ts.StartTime)
-                .ToList()
+                TimeSlots = group
+                    .Select(slot => new TimeSlotDto
+                    {
+                        StartTime = slot.StartTime,
+                        EndTime = slot.EndTime,
+                    })
+                    .OrderBy(ts => ts.StartTime)
+                    .ToList(),
             })
             .OrderBy(d => d.Date)
             .ToList();
@@ -158,11 +166,15 @@ public class AppointmentService : IAppointmentService
         {
             CaregiverId = caregiverId,
             CaregiverName = $"{caregiver.FirstName} {caregiver.LastName}",
-            AvailableSlots = groupedByDate
+            AvailableSlots = groupedByDate,
         };
     }
 
-    public async Task<Appointment> CompleteAppointmentAsync(int appointmentId, int userId, CompleteAppointmentRequest dto)
+    public async Task<Appointment> CompleteAppointmentAsync(
+        int appointmentId,
+        int userId,
+        CompleteAppointmentRequest dto
+    )
     {
         // Resolve Caregiver from UserId
         var caregiver = await _caregiverRepository.GetByUserIdAsync(userId);
@@ -175,26 +187,34 @@ public class AppointmentService : IAppointmentService
 
         if (appointment == null)
         {
-            throw new AppointmentNotFoundException($"Appointment with ID {appointmentId} not found.");
+            throw new AppointmentNotFoundException(
+                $"Appointment with ID {appointmentId} not found."
+            );
         }
 
         // Validate Caregiver
         if (appointment.CaregiverId != caregiver.Id)
         {
-            throw new UnauthorizedAccessException("You are not authorized to complete this appointment.");
+            throw new UnauthorizedAccessException(
+                "You are not authorized to complete this appointment."
+            );
         }
 
         // Validate Status
         if (appointment.Status != AppointmentStatus.Scheduled)
         {
-            throw new AppointmentValidationException($"Appointment must be in '{AppointmentStatus.Scheduled}' status to complete. Current status: '{appointment.Status}'.");
+            throw new AppointmentValidationException(
+                $"Appointment must be in '{AppointmentStatus.Scheduled}' status to complete. Current status: '{appointment.Status}'."
+            );
         }
 
         // Validate Time
         var appointmentEndDateTime = appointment.Date.ToDateTime(appointment.EndTime);
         if (DateTime.UtcNow < appointmentEndDateTime)
         {
-            throw new AppointmentValidationException("Cannot complete an appointment before its end time.");
+            throw new AppointmentValidationException(
+                "Cannot complete an appointment before its end time."
+            );
         }
 
         // Update
@@ -215,7 +235,9 @@ public class AppointmentService : IAppointmentService
         var appointment = await _appointmentRepository.GetByIdAsync(appointmentId);
         if (appointment == null)
         {
-            throw new AppointmentNotFoundException($"Appointment with ID {appointmentId} not found.");
+            throw new AppointmentNotFoundException(
+                $"Appointment with ID {appointmentId} not found."
+            );
         }
 
         // Check if user is Patient or Caregiver related to this appointment
@@ -227,13 +249,17 @@ public class AppointmentService : IAppointmentService
 
         if (!isPatient && !isCaregiver)
         {
-            throw new UnauthorizedAccessException("You are not authorized to cancel this appointment.");
+            throw new UnauthorizedAccessException(
+                "You are not authorized to cancel this appointment."
+            );
         }
 
         // Validate Status - Cannot cancel if already cancelled or completed
         if (appointment.Status != AppointmentStatus.Scheduled)
         {
-            throw new AppointmentValidationException($"Cannot cancel appointment with status '{appointment.Status}'. Only 'Scheduled' appointments can be cancelled.");
+            throw new AppointmentValidationException(
+                $"Cannot cancel appointment with status '{appointment.Status}'. Only 'Scheduled' appointments can be cancelled."
+            );
         }
 
         if (isPatient)
@@ -242,7 +268,9 @@ public class AppointmentService : IAppointmentService
             var appointmentDateTime = appointment.Date.ToDateTime(appointment.StartTime);
             if (DateTime.UtcNow > appointmentDateTime.AddHours(-1))
             {
-                throw new AppointmentValidationException("Appointments can only be cancelled up to 1 hour before the scheduled time.");
+                throw new AppointmentValidationException(
+                    "Appointments can only be cancelled up to 1 hour before the scheduled time."
+                );
             }
 
             // For patients, delete appointment.
@@ -262,7 +290,6 @@ public class AppointmentService : IAppointmentService
         return appointment;
     }
 
-
     // ============================================
     //            HELPER METHODS: CREATE
     //============================================
@@ -279,14 +306,16 @@ public class AppointmentService : IAppointmentService
         if (duration != TimeSpan.FromMinutes(30))
         {
             throw new AppointmentValidationException(
-                "Appointments must be exactly 30 minutes long.");
+                "Appointments must be exactly 30 minutes long."
+            );
         }
 
         // Must start on 30-minute boundaries (00 or 30)
         if (appointment.StartTime.Minute != 0 && appointment.StartTime.Minute != 30)
         {
             throw new AppointmentValidationException(
-                "Appointments must start at :00 or :30 (e.g., 10:00, 10:30).");
+                "Appointments must start at :00 or :30 (e.g., 10:00, 10:30)."
+            );
         }
 
         // Date validation
@@ -324,7 +353,8 @@ public class AppointmentService : IAppointmentService
         if (appointment.Date > maxBookingDate)
         {
             throw new AppointmentValidationException(
-                "Cannot book appointments more than 90 days in advance.");
+                "Cannot book appointments more than 90 days in advance."
+            );
         }
 
         // FR-2.5.2: Patients can book at least 2 hours in advance
@@ -332,18 +362,22 @@ public class AppointmentService : IAppointmentService
         if (appointmentDateTime < minBookingTime)
         {
             throw new AppointmentValidationException(
-                "Appointments must be booked at least 2 hours in advance.");
+                "Appointments must be booked at least 2 hours in advance."
+            );
         }
 
         // FR-2.5.5: Patients can book max 4 times per 30 days
         var thirtyDaysAgo = DateOnly.FromDateTime(now.AddDays(-30));
-        int bookingCount = await _appointmentRepository
-            .GetPatientAppointmentCountInLast30DaysAsync(appointment.PatientId, thirtyDaysAgo);
+        int bookingCount = await _appointmentRepository.GetPatientAppointmentCountInLast30DaysAsync(
+            appointment.PatientId,
+            thirtyDaysAgo
+        );
 
         if (bookingCount >= 4)
         {
             throw new AppointmentLimitException(
-                "Patient has reached the maximum limit of 4 bookings per 30 days.");
+                "Patient has reached the maximum limit of 4 bookings per 30 days."
+            );
         }
     }
 
@@ -368,7 +402,8 @@ public class AppointmentService : IAppointmentService
         int caregiverId,
         DateOnly date,
         TimeOnly startTime,
-        TimeOnly endTime)
+        TimeOnly endTime
+    )
     {
         //  Caregiver has a schedule for this day
         var dayOfWeek = date.DayOfWeek;
@@ -377,24 +412,29 @@ public class AppointmentService : IAppointmentService
         if (schedule == null)
         {
             throw new AppointmentValidationException(
-                $"Caregiver has no schedule available for {dayOfWeek}.");
+                $"Caregiver has no schedule available for {dayOfWeek}."
+            );
         }
 
         // Requested time falls within caregiver's working hours
         if (startTime < schedule.StartTime || endTime > schedule.EndTime)
         {
             throw new AppointmentValidationException(
-                $"Requested time slot is outside caregiver's working hours ({schedule.StartTime} - {schedule.EndTime}).");
+                $"Requested time slot is outside caregiver's working hours ({schedule.StartTime} - {schedule.EndTime})."
+            );
         }
 
         //  No conflicting appointments (NFR-2.5.4)
         bool hasConflict = await _appointmentRepository.HasConflictingAppointmentAsync(
-            caregiverId, date, startTime, endTime);
+            caregiverId,
+            date,
+            startTime,
+            endTime
+        );
 
         if (hasConflict)
         {
-            throw new AppointmentConflictException(
-                "The requested time slot is already booked.");
+            throw new AppointmentConflictException("The requested time slot is already booked.");
         }
     }
 
@@ -413,14 +453,15 @@ public class AppointmentService : IAppointmentService
     private List<TimeSlot> ExpandSchedulesToTimeSlots(
         List<CaregiverSchedule> schedules,
         DateTime startDate,
-        DateTime endDate)
+        DateTime endDate
+    )
     {
         var slots = new List<TimeSlot>();
 
         // Loop through each day in the date range
         for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
         {
-            var dayOfWeek = date.DayOfWeek;  // Get the day (Monday, Tuesday, etc.)
+            var dayOfWeek = date.DayOfWeek; // Get the day (Monday, Tuesday, etc.)
 
             // Find schedules for this day of the week
             var daySchedules = schedules
@@ -439,12 +480,14 @@ public class AppointmentService : IAppointmentService
                     // Only add if the slot fits within the schedule
                     if (slotEndTime <= schedule.EndTime)
                     {
-                        slots.Add(new TimeSlot
-                        {
-                            Date = DateOnly.FromDateTime(date),
-                            StartTime = currentTime,
-                            EndTime = slotEndTime
-                        });
+                        slots.Add(
+                            new TimeSlot
+                            {
+                                Date = DateOnly.FromDateTime(date),
+                                StartTime = currentTime,
+                                EndTime = slotEndTime,
+                            }
+                        );
                     }
 
                     currentTime = slotEndTime;
@@ -465,18 +508,21 @@ public class AppointmentService : IAppointmentService
 
     private List<TimeSlot> FilterOutConflicts(
         List<TimeSlot> potentialSlots,
-        List<Appointment> existingAppointments)
+        List<Appointment> existingAppointments
+    )
     {
-        return potentialSlots.Where(slot =>
-        {
-            // Check if this slot conflicts with any existing appointment
-            var hasConflict = existingAppointments.Any(appt =>
-                appt.Date == slot.Date &&
-                TimeSlotsOverlap(slot.StartTime, slot.EndTime, appt.StartTime, appt.EndTime)
-            );
+        return potentialSlots
+            .Where(slot =>
+            {
+                // Check if this slot conflicts with any existing appointment
+                var hasConflict = existingAppointments.Any(appt =>
+                    appt.Date == slot.Date
+                    && TimeSlotsOverlap(slot.StartTime, slot.EndTime, appt.StartTime, appt.EndTime)
+                );
 
-            // Keep the slot only if there's NO conflict
-            return !hasConflict;
-        }).ToList();
+                // Keep the slot only if there's NO conflict
+                return !hasConflict;
+            })
+            .ToList();
     }
 }
