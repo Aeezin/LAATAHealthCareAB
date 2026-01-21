@@ -20,7 +20,8 @@ namespace HealthCareAB_v1.DTOs
         [StringLength(50, MinimumLength = 5)]
         public string Email { get; set; } = null!;
 
-        [Required(ErrorMessage = "Personal Identity Number is required.")]
+        [Required(ErrorMessage = "Personal identity number is required")]
+        [RegularExpression(@"^\d{8}-\d{4}$", ErrorMessage = "Personal identity number must be in format YYYYMMDD-XXXX")]
         public string PersonalIdentityNumber { get; set; } = null!;
 
         [Required(ErrorMessage = "Password is required")]

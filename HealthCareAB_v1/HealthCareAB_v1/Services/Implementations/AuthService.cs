@@ -55,7 +55,19 @@ namespace HealthCareAB_v1.Services
             _caregiverRepository = caregiverRepository;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Registers a new patient user account and creates a corresponding <see cref="Patient"/> entity in the database.
+        /// </summary>
+        /// <param name="registerDto">
+        /// The registration request data containing user credentials and patient information.
+        /// </param>
+        /// <returns>
+        /// An <see cref="AuthResponseDto"/> containing the result of the registration process,
+        /// including success status, message, and authentication-related data.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown if <paramref name="registerDto"/> is <c>null</c>.
+        /// </exception>
         public async Task<AuthResponseDto> RegisterPatientAsync(RegisterDto registerDto)
         {
             ArgumentNullException.ThrowIfNull(registerDto);
@@ -68,14 +80,17 @@ namespace HealthCareAB_v1.Services
                 {
                     string fullPin = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
 
+                    string dateOfBirth = fullPin.Substring(0, 8);
+                    string lastFour = fullPin.Substring(9, 4);
+
                     Patient patient = new Patient
                     {
                         UserId = user.Id,
                         FirstName = registerDto.FirstName,
                         LastName = registerDto.LastName,
                         PhoneNumber = registerDto.PhoneNumber,
-                        DateOfBirth = fullPin.Split("-")[0],
-                        PersonalIdentityNumber = fullPin,
+                        DateOfBirth = dateOfBirth,
+                        PersonalIdentityNumber = lastFour,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
                     };
@@ -86,6 +101,19 @@ namespace HealthCareAB_v1.Services
             );
         }
 
+        /// <summary>
+        /// Registers a new caregiver user account and creates a corresponding <see cref="Caregiver"/> entity.
+        /// </summary>
+        /// <param name="registerCaregiverDto">
+        /// The registration request data containing caregiver credentials and profile information.
+        /// </param>
+        /// <returns>
+        /// An <see cref="AuthResponseDto"/> containing the result of the registration process,
+        /// including success status, message, and authentication-related data.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown if <paramref name="registerCaregiverDto"/> is <c>null</c>.
+        /// </exception>
         public async Task<AuthResponseDto> RegisterCaregiverAsync(
             RegisterCaregiverDto registerCaregiverDto
         )
@@ -118,6 +146,26 @@ namespace HealthCareAB_v1.Services
         /// <summary>
         /// Helper method that handles the common registration flow for all user types.
         /// </summary>
+        /// <param name="email">
+        /// The email address to register. This will be used as both <c>UserName</c> and <c>Email</c>.
+        /// </param>
+        /// <param name="password">
+        /// The password for the new user account.
+        /// </param>
+        /// <param name="roleName">
+        /// The role to assign to the user (e.g. <c>Patient</c>, <c>Caregiver</c>, <c>Admin</c>).
+        /// </param>
+        /// <param name="persistEntityAsync">
+        /// A callback responsible for persisting the domain entity related to the user (e.g. <see cref="Patient"/> or <see cref="Caregiver"/>).
+        /// This is executed after the Identity user is created and the role has been assigned.
+        /// </param>
+        /// <returns>
+        /// An <see cref="AuthResponseDto"/> describing whether the registration succeeded,
+        /// including a message and assigned role(s).
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Re-throws any unexpected exception after rolling back the transaction.
+        /// </exception>
         private async Task<AuthResponseDto> RegistrationHelper(
             string email,
             string password,
@@ -351,7 +399,7 @@ namespace HealthCareAB_v1.Services
         /// <inheritdoc />
         public CookieOptions GetJwtCookieOptions()
         {
-            return new CookieOptions
+            return new CookieOptions 
             {
                 HttpOnly = true,
                 Secure = !_isDevelopment,
@@ -374,22 +422,46 @@ namespace HealthCareAB_v1.Services
             };
         }
 
+        /// <summary>
+        /// Validates and normalizes a personal identity number by ensuring it contains exactly 12 digits.
+        /// </summary>
+        /// <param name="personalIdentityNumber">
+        /// The personal identity number to validate.
+        /// Expected format: <c>YYYYMMDDXXXX</c> (12 digits, no separators).
+        /// </param>
+        /// <returns>
+        /// A normalized personal identity number string containing exactly 12 digits.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown if <paramref name="personalIdentityNumber"/> is null, empty, whitespace,
+        /// not exactly 12 characters long, or contains non-digit characters.
+        /// </exception>
         private string PersonalIdentityNumber(string personalIdentityNumber)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(personalIdentityNumber);
 
-            string normalized = personalIdentityNumber.Replace("-", "").Trim();
+            string normalized = personalIdentityNumber.Trim();
 
-            if (normalized.Length != 12)
+            if (normalized.Length != 13)
             {
-                throw new ArgumentException("Personal identity number must be exactly 12 digits.");
+                throw new ArgumentException("Personal identity number must be exactly 13 characters (YYYYMMDD-XXXX).");
+            }
+
+            if (normalized[8] != '-')
+            {
+                throw new ArgumentException("Personal identity number must contain '-' in position 9 (YYYYMMDD-XXXX).");
             }
 
             for (int i = 0; i < normalized.Length; i++)
             {
+                if (i == 8)
+                {
+                    continue;
+                }
+
                 if (!char.IsDigit(normalized[i]))
                 {
-                    throw new ArgumentException("Personal identity number must contain only digits.");
+                    throw new ArgumentException("Personal identity number must contain only digits except for '-'.");
                 }
             }
 
