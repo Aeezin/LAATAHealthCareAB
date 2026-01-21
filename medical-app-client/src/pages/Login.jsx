@@ -9,14 +9,13 @@ import PrimaryButton from "../components/PrimaryButton";
 import AuthForm from "../components/AuthForm";
 
 // API endpoint for login
-const LOGIN_URL_PATIENT = "http://localhost:5256/api/Patients/login";
-const LOGIN_URL_CAREGIVER = "http://localhost:5256/api/Caregivers/login";
+const LOGIN_URL_PATIENT = "http://localhost:5256/api/Auth/login-patient";
+const LOGIN_URL_CAREGIVER = "http://localhost:5256/api/Auth/login-caregiver";
 
 // Styled components for login page layout
 const LoginContainer = styled(Stack)`
   align-items: center;
 `;
-
 
 const Title = styled.h2`
   font-size: 22px;
@@ -57,6 +56,7 @@ function Login() {
       } else if (userType === UserType.CAREGIVER) {
         LOGIN_URL = LOGIN_URL_CAREGIVER;
       }
+
       const response = await axios.post(LOGIN_URL, credentials, {
         // withCredentials: true is required for the server to set HTTP-only cookies
         // This is essential for cookie-based authentication
@@ -65,13 +65,14 @@ function Login() {
 
       console.log("Login successful:", JSON.stringify(response.data));
 
-      const { loggedInUser, roles } = response.data;
+      const { loggedInUser, roles, entityId } = response.data;
 
       // Update global auth state with user information
       setAuthState({
         isAuthenticated: true,
         user: loggedInUser,
         roles: roles,
+        entityId: entityId,
       });
 
       // Redirect based on user role
@@ -94,12 +95,15 @@ function Login() {
       <Title>Patient Login</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <AuthForm onSubmit={handleLogin} aria-label="Login form">
-        <TextInput label="Personal Identity Number" name="identfier" onChange={handleInputChange}></TextInput>
-        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
+        <TextInput label="Personal Identity Number" name="identifier" onChange={handleInputChange}></TextInput>
+        <PasswordInput label="Password" name="password" onChange={handleInputChange}></PasswordInput>
         <Group justify="space-between">
-          
-          <PrimaryButton type="button" $variant="secondary" onClick={() => navigate("/register?type=patient")}>Register</PrimaryButton>
-          <PrimaryButton type="submit" $variant="submit">Login</PrimaryButton>
+          <PrimaryButton type="button" $variant="secondary" onClick={() => navigate("/register?type=patient")}>
+            Register
+          </PrimaryButton>
+          <PrimaryButton type="submit" $variant="submit">
+            Login
+          </PrimaryButton>
         </Group>
       </AuthForm>
     </LoginContainer>
@@ -108,9 +112,11 @@ function Login() {
       <Title>Caregiver Login</Title>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <AuthForm onSubmit={handleLogin} aria-label="Login form">
-        <TextInput label="Username" name="identfier" onChange={handleInputChange}></TextInput>
-        <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
-        <PrimaryButton type="submit" $variant="submit">Login</PrimaryButton>
+        <TextInput label="Username" name="identifier" onChange={handleInputChange}></TextInput>
+        <PasswordInput label="Password" name="password" onChange={handleInputChange}></PasswordInput>
+        <PrimaryButton type="submit" $variant="submit">
+          Login
+        </PrimaryButton>
       </AuthForm>
     </LoginContainer>
   ) : userType === UserType.ADMIN ? (

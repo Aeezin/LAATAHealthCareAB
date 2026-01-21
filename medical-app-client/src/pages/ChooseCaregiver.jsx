@@ -36,11 +36,6 @@ function ChooseCaregiver() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // const {
-    //     authState: { user },
-    // } = useAuth();
-
-    const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const fetchCaregivers = async () => {
