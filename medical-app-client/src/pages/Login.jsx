@@ -72,6 +72,7 @@ function Login() {
         isAuthenticated: true,
         user: loggedInUser,
         roles: roles,
+        entityId: entityId
       });
 
       // Redirect based on user role
@@ -97,7 +98,7 @@ function Login() {
         <TextInput label="Personal Identity Number" name="identfier" onChange={handleInputChange}></TextInput>
         <PasswordInput label="Password" onChange={handleInputChange}></PasswordInput>
         <Group justify="space-between">
-          
+
           <PrimaryButton type="button" $variant="secondary" onClick={() => navigate("/register?type=patient")}>Register</PrimaryButton>
           <PrimaryButton type="submit" $variant="submit">Login</PrimaryButton>
         </Group>

@@ -17,7 +17,7 @@ const PatientCard = styled(UnstyledButton)` transition: transform 0.2s, box-shad
     }
 `;
 
-
+const { authState: { user, entityId, roles } } = useAuth();
 
 function PatientProfile() {
     const [patient, setPatient] = useState(null);
@@ -26,8 +26,13 @@ function PatientProfile() {
 
     useEffect(() => {
         const fetchPatientProfile = async () => {
+            if (!entityId) {
+                setError("No patient ID found");
+                setLoading(false);
+                return;
+            }
             try {
-                const response = await axios.get(GET_URL_PATIENT_PROFILE, {
+                const response = await axios.get(`$GET_URL_PATIENT_PROFILE/${entityId}`, {
                     withCredentials: true,
                 });
                 setPatient(response.data);
@@ -38,7 +43,7 @@ function PatientProfile() {
             }
         };
         fetchPatientProfile();
-    }, []);
+    }, [entityId]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
