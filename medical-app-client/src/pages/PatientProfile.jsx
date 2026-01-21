@@ -28,6 +28,7 @@ function PatientProfile() {
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
     const { authState: { user, entityId, roles } } = useAuth();
     useEffect(() => {
         const fetchPatientProfile = async () => {
@@ -37,7 +38,7 @@ function PatientProfile() {
                 return;
             }
             try {
-                const response = await axios.get(`$GET_URL_PATIENT_PROFILE/${entityId}`, {
+                const response = await axios.get(`${GET_URL_PATIENTS}/${entityId}`, {
                     withCredentials: true,
                 });
                 setPatient(response.data);
@@ -49,9 +50,9 @@ function PatientProfile() {
         };
         fetchPatientProfile();
     }, [entityId]);
-
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
+    if (!patient) return <p>No patient data found</p>;
 
     return (
         <PatientProfileContainer>
@@ -76,23 +77,29 @@ function PatientProfile() {
                     </div>
                 </div>
 
+
+
                 <Text size="sm" mb="sm">
-                    <strong>Phone:</strong> {patient.phoneNumber}
+                    <strong>Phone:</strong> {patient.phoneNumber || "Not available"}
                 </Text>
 
                 <Text size="sm" mb="xl">
-                    <strong>Address:</strong> {patient.address}
+                    <strong>Address:</strong> {patient.address || "Not available"}
                 </Text>
-
+                <Link key={patient.id} to={"/booking/"} >
+                    <Button fullWidth mb="sm">
+                        Your Appointments
+                    </Button>
+                </Link>
                 <Button fullWidth mb="sm">
-                    Edit profile
+                    Edit Profile
                 </Button>
 
                 <Button fullWidth color="red" variant="outline">
-                    Forget me
+                    Remove Account
                 </Button>
             </Card>
-        </PatientProfileContainer>
+        </PatientProfileContainer >
     );
 }
 export default PatientProfile;
