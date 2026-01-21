@@ -65,6 +65,7 @@ public class AuthService_LoginCaregiver_Tests
         Assert.Equal("Smith", response.LastName);
         Assert.Contains("Caregiver", response.Roles);
         Assert.Equal(expectedToken, token);
+        Assert.Equal(1, response.EntityId);
     }
 
     #endregion
