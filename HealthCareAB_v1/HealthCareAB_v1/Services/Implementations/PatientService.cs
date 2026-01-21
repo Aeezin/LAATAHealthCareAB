@@ -47,6 +47,7 @@ public class PatientService : IPatientService
             Id = patient.Id,
             FirstName = patient.FirstName,
             LastName = patient.LastName,
+            Email = patient.User.Email,
             PhoneNumber = patient.PhoneNumber,
             DateOfBirth = patient.DateOfBirth,
             PersonalIdentityNumber = patient.PersonalIdentityNumber,
