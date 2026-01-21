@@ -81,7 +81,7 @@ namespace HealthCareAB_v1.Services
                     string fullPin = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
 
                     string dateOfBirth = fullPin.Substring(0, 8);
-                    string lastFour = fullPin.Substring(8, 4);
+                    string lastFour = fullPin.Substring(9, 4);
 
                     Patient patient = new Patient
                     {
@@ -442,16 +442,26 @@ namespace HealthCareAB_v1.Services
 
             string normalized = personalIdentityNumber.Trim();
 
-            if (normalized.Length != 12)
+            if (normalized.Length != 13)
             {
-                throw new ArgumentException("Personal identity number must be exactly 12 digits.");
+                throw new ArgumentException("Personal identity number must be exactly 13 characters (YYYYMMDD-XXXX).");
+            }
+
+            if (normalized[8] != '-')
+            {
+                throw new ArgumentException("Personal identity number must contain '-' in position 9 (YYYYMMDD-XXXX).");
             }
 
             for (int i = 0; i < normalized.Length; i++)
             {
+                if (i == 8)
+                {
+                    continue;
+                }
+
                 if (!char.IsDigit(normalized[i]))
                 {
-                    throw new ArgumentException("Personal identity number must contain only digits.");
+                    throw new ArgumentException("Personal identity number must contain only digits except for '-'.");
                 }
             }
 
