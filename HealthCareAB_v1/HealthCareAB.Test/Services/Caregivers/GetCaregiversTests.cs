@@ -30,8 +30,8 @@ namespace HealthCareAB.Test.Services.Caregivers
             // Arrange
             var caregivers = new List<Caregiver>
             {
-                new Caregiver { Id = 1, FirstName = "John", LastName = "Doe", Specialisation = "GP", Room = "101", UserId = 1 },
-                new Caregiver { Id = 2, FirstName = "Jane", LastName = "Smith", Specialisation = "Surgeon", Room = "202", UserId = 2 }
+                new Caregiver { Id = 1, FirstName = "John", LastName = "Doe", Specialisation = "GP", Room = "101", UserId = 1, User = new ApplicationUser { Email = "john.doe@example.com" } },
+                new Caregiver { Id = 2, FirstName = "Jane", LastName = "Smith", Specialisation = "Surgeon", Room = "202", UserId = 2, User = new ApplicationUser { Email = "jane.smith@example.com" } }
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(caregivers);
 
@@ -47,7 +47,7 @@ namespace HealthCareAB.Test.Services.Caregivers
         public async Task GetCaregiverById_WithValidId_ReturnsCaregiver()
         {
             // Arrange
-            var caregiver = new Caregiver { Id = 1, FirstName = "John", LastName = "Doe", Specialisation = "GP", Room = "101", UserId = 1 };
+            var caregiver = new Caregiver { Id = 1, FirstName = "John", LastName = "Doe", Specialisation = "GP", Room = "101", UserId = 1, User = new ApplicationUser { Email = "john.doe@example.com" } };
             _mockRepo.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(caregiver);
 
             // Act
@@ -92,7 +92,8 @@ namespace HealthCareAB.Test.Services.Caregivers
                 Bio = "My Bio", 
                 Verified = true, 
                 IsAcceptingPatients = true,
-                UserId = 1
+                UserId = 1,
+                User = new ApplicationUser { Email = "john.doe@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(new List<Caregiver> { caregiver });
 
@@ -120,7 +121,8 @@ namespace HealthCareAB.Test.Services.Caregivers
                 LastName = "Wonder", 
                 Specialisation = "Nobody", 
                 Room = "000",
-                UserId = 10
+                UserId = 10,
+                User = new ApplicationUser { Email = "alice.wonder@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(10)).ReturnsAsync(caregiver);
 
@@ -168,7 +170,8 @@ namespace HealthCareAB.Test.Services.Caregivers
                 LastName = "Last", 
                 Specialisation = "Spec", 
                 Room = "1",
-                UserId = i
+                UserId = i,
+                User = new ApplicationUser { Email = $"caregiver{i}@example.com" }
             }).ToList();
             
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(largeList);
@@ -191,7 +194,8 @@ namespace HealthCareAB.Test.Services.Caregivers
                 LastName = "O'Connor", 
                 Specialisation = "C# & .NET", 
                 Room = "A-101", 
-                UserId = 5 
+                UserId = 5,
+                User = new ApplicationUser { Email = "jose.oconnor@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(5)).ReturnsAsync(caregiver);
 

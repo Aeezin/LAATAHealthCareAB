@@ -47,6 +47,7 @@ public class CaregiverService : ICaregiverService
             Id = caregiver.Id,
             FirstName = caregiver.FirstName,
             LastName = caregiver.LastName,
+            Email = caregiver.User.Email,
             Specialisation = caregiver.Specialisation,
             Room = caregiver.Room,
             Bio = caregiver.Bio,

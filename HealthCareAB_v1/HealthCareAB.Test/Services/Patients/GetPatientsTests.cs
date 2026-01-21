@@ -40,6 +40,7 @@ namespace HealthCareAB.Test.Services.Patients
                     DateOfBirth = "1980-01-01",
                     PersonalIdentityNumber = "19800101-1234",
                     PhoneNumber = "1234567890",
+                    User = new ApplicationUser { Email = "john.doe@example.com" }
                 },
                 new Patient
                 {
@@ -50,6 +51,7 @@ namespace HealthCareAB.Test.Services.Patients
                     DateOfBirth = "1990-02-02",
                     PersonalIdentityNumber = "19900202-5678",
                     PhoneNumber = "0987654321",
+                    User = new ApplicationUser { Email = "jane.smith@example.com" }
                 },
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(patients);
@@ -74,6 +76,7 @@ namespace HealthCareAB.Test.Services.Patients
                 UserId = 1,
                 DateOfBirth = "1980-01-01",
                 PersonalIdentityNumber = "19800101-1234",
+                User = new ApplicationUser { Email = "john.doe@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(patient);
 
@@ -126,6 +129,7 @@ namespace HealthCareAB.Test.Services.Patients
                 DateOfBirth = "1980-01-01",
                 PersonalIdentityNumber = "19800101-1234",
                 PhoneNumber = "1234567890",
+                User = new ApplicationUser { Email = "john.doe@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetAllAsync()).ReturnsAsync(new List<Patient> { patient });
 
@@ -154,6 +158,7 @@ namespace HealthCareAB.Test.Services.Patients
                 DateOfBirth = "2000-05-05",
                 PersonalIdentityNumber = "20000505-9999",
                 PhoneNumber = "555-5555",
+                User = new ApplicationUser { Email = "alice.wonder@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(10)).ReturnsAsync(patient);
 
@@ -209,6 +214,7 @@ namespace HealthCareAB.Test.Services.Patients
                     UserId = i,
                     DateOfBirth = "1990-01-01",
                     PersonalIdentityNumber = $"19900101-{i:0000}",
+                    User = new ApplicationUser { Email = $"patient{i}@example.com" }
                 })
                 .ToList();
 
@@ -233,6 +239,7 @@ namespace HealthCareAB.Test.Services.Patients
                 UserId = 5,
                 DateOfBirth = "1985-12-12",
                 PersonalIdentityNumber = "19851212-0000",
+                User = new ApplicationUser { Email = "jose.oconnor@example.com" }
             };
             _mockRepo.Setup(repo => repo.GetByIdAsync(5)).ReturnsAsync(patient);
 
