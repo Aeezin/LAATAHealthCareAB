@@ -1,4 +1,4 @@
-import { Stack, SimpleGrid, Card, Image, Text, UnstyledButton } from "@mantine/core";
+import { Stack, SimpleGrid, Card, Image, Text, UnstyledButton, Button } from "@mantine/core";
 import styled from "styled-components";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
@@ -17,13 +17,18 @@ const PatientCard = styled(UnstyledButton)` transition: transform 0.2s, box-shad
     }
 `;
 
-const { authState: { user, entityId, roles } } = useAuth();
+const PatientProfileContainer = styled(Stack)`
+    align-items: center;
+    padding: 2rem;
+`;
+
+
 
 function PatientProfile() {
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
+    const { authState: { user, entityId, roles } } = useAuth();
     useEffect(() => {
         const fetchPatientProfile = async () => {
             if (!entityId) {

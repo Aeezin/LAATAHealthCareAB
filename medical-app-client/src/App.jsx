@@ -13,6 +13,7 @@ import Navbar from "./components/Navbar";
 import { Stack } from "@mantine/core";
 import BookingView from "./pages/BookingView";
 import ChooseCaregiver from "./pages/ChooseCaregiver";
+import PatientProfile from "./pages/PatientProfile";
 
 // AuthProvider must wrap Router to ensure auth state is available to all routes
 function App() {
@@ -29,12 +30,13 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/choose-caregiver"
             element={<ChooseCaregiver />} />
-         
 
 
           {/* TEMP PUBLIC MOVE TO PROTECTED LATER */}
           <Route path="/booking" element={<BookingView />} />
           <Route path="/booking/:caregiverId" element={<BookingView />} />
+          <Route path="/profile"
+            element={<PatientProfile />} />
 
           {/* Protected routes - require authentication and specific roles */}
           <Route
