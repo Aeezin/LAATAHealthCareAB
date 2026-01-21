@@ -8,7 +8,7 @@
 - .NET 8 SDK (API)
 - .NET 10 SDK (Tests - optional if only running API)
 - Docker & Docker Compose
-- 
+
 #### Packages
 
 **Runtime**
@@ -30,7 +30,7 @@
 - Moq
 - coverlet.collector
 - coverlet.msbuild
-- 
+
 #### Configuration
 Create a `.env` file in the API project directory: `HealthCareAB_v1/HealthCareAB_v1/.env`
 Add the following variables (adjust values as needed):
@@ -81,7 +81,7 @@ DB_PORT=5432
 #### Dependencies
 
 - Node.js (Latest LTS recommended)
-- 
+
 #### Packages
 **Core**
 - React ^18.3.1
