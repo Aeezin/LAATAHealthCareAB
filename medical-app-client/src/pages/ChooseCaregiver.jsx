@@ -38,7 +38,6 @@ function ChooseCaregiver() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-
   useEffect(() => {
     const fetchCaregivers = async () => {
       try {
