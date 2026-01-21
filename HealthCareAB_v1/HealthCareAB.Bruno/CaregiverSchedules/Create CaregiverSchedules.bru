@@ -1,0 +1,20 @@
+meta {
+  name: Create CaregiverSchedules
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:5256/api/caregiverschedules
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "caregiverId": 1,
+    "dayOfWeek": 4, 
+    "startTime": "08:00:00",
+    "endTime": "17:00:00"
+  }
+}

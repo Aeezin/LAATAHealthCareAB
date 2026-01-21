@@ -1,0 +1,22 @@
+meta {
+  name: GetAvailableSlots
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:5256/api/Appointments/available-slots?CaregiverId=1&StartDate=2026-01-22T00:00:00Z&EndDate=2026-01-29T00:00:00Z
+  body: none
+  auth: inherit
+}
+
+params:query {
+  CaregiverId: 1
+  StartDate: 2026-01-22T00:00:00Z
+  EndDate: 2026-01-29T00:00:00Z
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

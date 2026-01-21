@@ -1,0 +1,27 @@
+meta {
+  name: Register Patient
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5256/api/auth/register-patient
+  body: json
+  auth: inherit
+}
+
+headers {
+  : 
+}
+
+body:json {
+  {
+    "firstName": "Sven",
+    "lastName": "Svensson",
+    "email": "sven.svensson@example.com",
+    "password": "Password123!",
+    "dateOfBirth": "1990-01-01",
+    "personalIdentityNumber": "19900101-1234",
+    "phoneNumber": "0701234567"
+  }
+}

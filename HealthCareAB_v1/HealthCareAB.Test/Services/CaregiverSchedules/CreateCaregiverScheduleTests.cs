@@ -56,7 +56,7 @@ public class CreateCaregiverScheduleTests
         // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
-                new TimeOnly(8, 0), new TimeOnly(12, 0)))
+                new TimeOnly(8, 0), new TimeOnly(12, 0), null))
             .ReturnsAsync(false);
 
         // Mock: Create returns expected schedule
@@ -231,7 +231,7 @@ public class CreateCaregiverScheduleTests
         // Mock: Overlap exists
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
-                new TimeOnly(10, 0), new TimeOnly(14, 0)))
+                new TimeOnly(10, 0), new TimeOnly(14, 0), null))
             .ReturnsAsync(true);
 
         // Act & Assert
@@ -276,7 +276,7 @@ public class CreateCaregiverScheduleTests
         // Mock: No overlap for caregiver 2
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(2, DayOfWeek.Monday,
-                new TimeOnly(8, 0), new TimeOnly(12, 0)))
+                new TimeOnly(8, 0), new TimeOnly(12, 0), null))
             .ReturnsAsync(false);
 
         _mockScheduleRepository
@@ -322,7 +322,7 @@ public class CreateCaregiverScheduleTests
         // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Monday,
-                new TimeOnly(13, 0), new TimeOnly(17, 0)))
+                new TimeOnly(13, 0), new TimeOnly(17, 0), null))
             .ReturnsAsync(false);
 
         _mockScheduleRepository
@@ -368,7 +368,7 @@ public class CreateCaregiverScheduleTests
         // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(1, DayOfWeek.Tuesday,
-                new TimeOnly(8, 0), new TimeOnly(12, 0)))
+                new TimeOnly(8, 0), new TimeOnly(12, 0), null))
             .ReturnsAsync(false);
 
         _mockScheduleRepository
@@ -406,7 +406,7 @@ public class CreateCaregiverScheduleTests
         // Mock: No overlap
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(It.IsAny<int>(), It.IsAny<DayOfWeek>(),
-                It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
+                It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>(), It.IsAny<int?>()))
             .ReturnsAsync(false);
 
         _mockScheduleRepository
@@ -446,7 +446,7 @@ public class CreateCaregiverScheduleTests
 
         _mockScheduleRepository
             .Setup(repo => repo.HasOverlappingScheduleAsync(It.IsAny<int>(), It.IsAny<DayOfWeek>(),
-                It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>()))
+                It.IsAny<TimeOnly>(), It.IsAny<TimeOnly>(), It.IsAny<int?>()))
             .ReturnsAsync(false)
             .Callback(() => callOrder.Add("HasOverlap"));
 
