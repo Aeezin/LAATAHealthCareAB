@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -47,6 +47,7 @@ function getWeekRangeString(weekDates) {
   return `${start} - ${end}`;
 }
 
+// ----- Normalization helpers -----
 function normalizeAvailableSlotsResponse(apiData) {
   if (!apiData || !Array.isArray(apiData.availableSlots)) return [];
 
@@ -55,7 +56,7 @@ function normalizeAvailableSlotsResponse(apiData) {
       caregiverId: apiData.caregiverId,
       caregiverName: apiData.caregiverName,
       bookings: apiData.availableSlots.map((day) => ({
-        date: day.date.split("T")[0], // ISO → YYYY-MM-DD
+        date: day.date.split("T")[0],
         appointments: day.timeSlots.map((slot) => ({
           startTime: slot.startTime,
           endTime: slot.endTime,
@@ -67,7 +68,6 @@ function normalizeAvailableSlotsResponse(apiData) {
 
 function normalizeAppointmentsResponse(apiData) {
   if (!apiData) return [];
-
   if (Array.isArray(apiData)) return apiData;
   if (Array.isArray(apiData.appointments)) return apiData.appointments;
 
@@ -77,10 +77,8 @@ function normalizeAppointmentsResponse(apiData) {
 
 // ----- Main component -----
 export default function BookingCalendar() {
-  const { authState } = useAuth();
-  const role = authState.role || "patient";
-  const userId = authState.user.id;
-  console.log(authState.user)
+  const { authState: { entityId, roles } } = useAuth();
+  const role = roles.includes("Patient") ? "patient" : roles.includes("Caregiver") ? "caregiver" : null;
 
   const { caregiverId } = useParams();
 
@@ -94,41 +92,38 @@ export default function BookingCalendar() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ----- Fetch data using Axios -----
-  useEffect(() => {
+  // ----- Refetch function -----
+  const fetchData = async () => {
     setLoading(true);
+    try {
+      if (caregiverId) {
+        const [bookingsRes, appointmentsRes] = await Promise.all([
+          axios.get("http://localhost:5256/api/Appointments/available-slots", {
+            params: {
+              CaregiverId: caregiverId,
+              StartDate: today.toISOString(),
+              EndDate: maxBookingDate.toISOString(),
+            },
+            withCredentials: true,
+          }),
+          axios.get("http://localhost:5256/api/appointments", { withCredentials: true }),
+        ]);
 
-    const fetchData = async () => {
-      try {
-        if (caregiverId) {
-          const [bookingsRes, appointmentsRes] = await Promise.all([
-            axios.get("http://localhost:5256/api/Appointments/available-slots", {
-              params: {
-                CaregiverId: caregiverId,
-                StartDate: today.toISOString(),
-                EndDate: maxBookingDate.toISOString(),
-              },
-              withCredentials: true,
-            }),
-            axios.get("http://localhost:5256/api/appointments", { withCredentials: true }),
-          ]);
-
-          const normalizedBookings = normalizeAvailableSlotsResponse(bookingsRes.data);
-          const normalizedAppointments = normalizeAppointmentsResponse(appointmentsRes.data);
-
-          setBookings(normalizedBookings);
-          setAppointments(normalizedAppointments);
-        } else {
-          const res = await axios.get("/api/appointments", { withCredentials: true });
-          setAppointments(normalizeAppointmentsResponse(res.data));
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+        setBookings(normalizeAvailableSlotsResponse(bookingsRes.data));
+        setAppointments(normalizeAppointmentsResponse(appointmentsRes.data));
+      } else {
+        const res = await axios.get("http://localhost:5256/api/appointments", { withCredentials: true });
+        setAppointments(normalizeAppointmentsResponse(res.data));
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // ----- Fetch on mount & caregiver change -----
+  useEffect(() => {
     fetchData();
   }, [caregiverId]);
 
@@ -145,8 +140,8 @@ export default function BookingCalendar() {
         date: day.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
-      })),
-    ),
+      }))
+    )
   );
 
   const dataForWeek =
@@ -175,26 +170,23 @@ export default function BookingCalendar() {
     monday.setDate(monday.getDate() + 7);
   }
 
-  // ----- Appointment API calls -----
+  // ----- Appointment API calls (with refetch) -----
   const createAppointment = async (slot) => {
     try {
       const payload = {
-        patientId: userId,        // logged-in patient
+        patientId: entityId,
         caregiverId: slot.caregiverId,
-        date: slot.date,          // "YYYY-MM-DD"
+        date: slot.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
         patientNotes: null,
       };
 
-      const res = await axios.post(
-        "http://localhost:5256/api/appointments",
-        payload,
-        { withCredentials: true }
-      );
+      await axios.post("http://localhost:5256/api/appointments", payload, { withCredentials: true });
 
-      // Add to local state
-      setAppointments((prev) => [...prev, res.data]);
+      // Refetch bookings & appointments
+      await fetchData();
+
       alert("Appointment created successfully!");
     } catch (err) {
       console.error("Failed to create appointment", err);
@@ -204,20 +196,11 @@ export default function BookingCalendar() {
 
   const cancelAppointment = async (appointmentId) => {
     try {
-      const res = await axios.put(
-        `http://localhost:5256/api/appointments/cancel/${appointmentId}`,
-        {},
-        { withCredentials: true }
-      );
+      await axios.put(`http://localhost:5256/api/appointments/cancel/${appointmentId}`, {}, { withCredentials: true });
 
-      // Update local state
-      setAppointments((prev) =>
-        prev.map((a) =>
-          a.id === appointmentId
-            ? { ...a, status: res.data.status }
-            : a
-        )
-      );
+      // Refetch bookings & appointments
+      await fetchData();
+
       alert("Appointment cancelled successfully!");
     } catch (err) {
       console.error("Failed to cancel appointment", err);

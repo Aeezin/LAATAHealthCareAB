@@ -25,6 +25,7 @@ export default function BookingCalendarSection({ booking, role, onBook, onCancel
         startTime={booking.startTime}
         endTime={booking.endTime}
         onClick={() => setOpen(true)}
+        cancelled={booking.status === 2}
         variant={variant}
       />
 

@@ -39,15 +39,17 @@ const LogoContainer = styled.img`
 `;
 
 export default function Home() {
-  const { authState } = useAuth();
+  const { authState }  = useAuth();
   const isAuthenticated = authState.isAuthenticated;
+  const roles = authState.roles;
+
 
   return isAuthenticated ? (
     <>
       <HomeContainer>
         <Stack>
           <LogoContainer src={Logo} alt="Health Care Logo" />
-          <LinkButton to="/choose-caregiver">Booking</LinkButton>
+          {roles.includes("Patient") && <LinkButton to="/choose-caregiver">Booking</LinkButton>}
           <LinkButton to="/booking">Your Appointments</LinkButton>
         </Stack>
       </HomeContainer>
