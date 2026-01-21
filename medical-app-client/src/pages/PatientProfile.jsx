@@ -82,21 +82,27 @@ function PatientProfile() {
                 <Text size="sm" mb="sm">
                     <strong>Phone:</strong> {patient.phoneNumber || "Not available"}
                 </Text>
-
-                <Text size="sm" mb="xl">
-                    <strong>Email:</strong> {patient. || "Not available"}
+                <Text size="sm" mb="sm">
+                    <strong>Email:</strong> {patient.email || "Not available"}
                 </Text>
-
+                <Text size="sm" mb="xl">
+                    <strong>Date of birth:</strong> {patient.dateOfBirth || "Not available"}
+                </Text>
                 <Link key={patient.id} to={"/booking/"} >
                     <Button fullWidth mb="sm">
                         Your Appointments
                     </Button>
                 </Link>
+
                 <Button fullWidth mb="sm">
                     Edit Profile
                 </Button>
 
-                <Button fullWidth color="red" variant="outline">
+                <Button fullWidth color="red" mb="sm" variant="outline">
+                    Logout
+                </Button>
+
+                <Button fullWidth color="red" mb="sm" variant="outline">
                     Remove Account
                 </Button>
             </Card>
