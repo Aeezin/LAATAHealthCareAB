@@ -10,12 +10,12 @@ const Slot = styled(Group)`
   width: 100%;
   padding: 6px;
   cursor: pointer;
-  background-color: ${({ variant }) => (variant === "bookings" ? "#7cfc8d" : "#87cefa")};
+  background-color: ${({ variant, cancelled }) => (cancelled ? "#f08080" : variant === "bookings" ? "#7cfc8d" : "#87cefa")};
 `;
 
-function BookingSlot({ title, startTime, endTime, onClick, variant }) {
+function BookingSlot({ title, startTime, endTime, onClick, variant, cancelled }) {
   return (
-    <Slot onClick={onClick} variant={variant}>
+    <Slot onClick={onClick} variant={variant} cancelled={cancelled}>
       <Text size="xs">{title}</Text>
       <Text size="xs">{`${startTime} - ${endTime}`}</Text>
     </Slot>
@@ -28,6 +28,7 @@ BookingSlot.propTypes = {
   endTime: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
   variant: PropTypes.oneOf(["bookings", "appointments"]).isRequired,
+  cancelled: PropTypes.bool,
 };
 
 export default BookingSlot;

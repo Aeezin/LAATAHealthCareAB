@@ -3,7 +3,9 @@ import PropTypes from "prop-types";
 
 function BookingActionsModal({ opened, onClose, role, booking, variant, onBook, onCancel }) {
   const time = `${booking.startTime} - ${booking.endTime}`;
-
+  const bookingStatus = booking.status === 0 ? "Scheduled" : booking.status === 1 ? "Completed" : "Cancelled";
+  console.log("BookingActionsModal booking:", bookingStatus);
+  console.log(variant === "appointments" && booking.status);
   return (
     <Modal opened={opened} onClose={onClose} title={variant === "bookings" ? "Available Slot" : "Appointment Details"} centered>
       <Stack gap="md">
@@ -17,7 +19,7 @@ function BookingActionsModal({ opened, onClose, role, booking, variant, onBook, 
         {variant === "appointments" && booking.room && <Text>Room: {booking.room}</Text>}
         {variant === "appointments" && booking.patientNotes && <Text>Patient Notes: {booking.patientNotes}</Text>}
         {variant === "appointments" && booking.caregiverNotes && <Text>Caregiver Notes: {booking.caregiverNotes}</Text>}
-        {variant === "appointments" && booking.status && <Text>Status: {booking.status}</Text>}
+        {variant === "appointments" && booking.status != null && <Text>Status: {bookingStatus}</Text>}
 
         {variant === "bookings" && (
           <Button color="green" onClick={() => onBook?.(booking)}>
