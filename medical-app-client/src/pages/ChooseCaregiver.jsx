@@ -15,11 +15,11 @@ import { Link } from "react-router-dom";
 const GET_URL_CAREGIVER = "http://localhost:5256/api/Caregivers";
 const ChooseCaregiverContainer = styled(Stack)` align-items: center; padding 600px `;
 const caregiverImages = {
-  4: caregiver1,
-  5: caregiver2,
-  6: caregiver3,
-  7: caregiver4,
-  8: caregiver5,
+  1: caregiver1,
+  2: caregiver2,
+  3: caregiver3,
+  4: caregiver4,
+  5: caregiver5,
 };
 
 const CaregiverCard = styled(UnstyledButton)`

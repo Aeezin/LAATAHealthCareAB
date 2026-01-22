@@ -3,8 +3,8 @@ import styled from "styled-components";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useState, useEffect } from 'react';
-import { NavLink, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 const GET_URL_PATIENTS = "http://localhost:5256/api/Patients";
@@ -28,6 +28,8 @@ function PatientProfile() {
     const [patient, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const { authState: { user, entityId, roles } } = useAuth();
     useEffect(() => {
@@ -53,6 +55,21 @@ function PatientProfile() {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
     if (!patient) return <p>No patient data found</p>;
+
+    const handleLogout = async () => {
+        try {
+            await axios.post(
+                "http://localhost:5256/api/auth/logout",
+                {},
+                { withCredentials: true }
+            );
+
+            logout();
+            navigate("/");
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
+    };
 
     return (
         <PatientProfileContainer>
@@ -97,8 +114,13 @@ function PatientProfile() {
                 <Button fullWidth mb="sm">
                     Edit Profile
                 </Button>
-
-                <Button fullWidth color="red" mb="sm" variant="outline">
+                <Button
+                    fullWidth
+                    color="red"
+                    mb="sm"
+                    variant="outline"
+                    onClick={handleLogout}
+                >
                     Logout
                 </Button>
 
