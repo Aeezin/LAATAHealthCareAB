@@ -34,9 +34,9 @@ const CaregiverCard = styled(UnstyledButton)`
 `;
 
 function ChooseCaregiver() {
-    const [caregivers, setCaregivers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [caregivers, setCaregivers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchCaregivers = async () => {
