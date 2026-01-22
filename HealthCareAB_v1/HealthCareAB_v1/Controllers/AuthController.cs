@@ -194,6 +194,7 @@ namespace HealthCareAB_v1.Controllers
                     message = result.Message,
                     loggedInUser = $"{result.FirstName} {result.LastName}",
                     roles = result.Roles,
+                    entityId = result.EntityId,
                 }
             );
         }

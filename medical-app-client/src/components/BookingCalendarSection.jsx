@@ -16,7 +16,7 @@ export default function BookingCalendarSection({ booking, role, onBook, onCancel
         variant={variant}
       />
 
-      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onBook={onBook} onCancel={onCancel} />
+      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onBook={onBook} />
     </>
   ) : (
     <>
@@ -25,10 +25,11 @@ export default function BookingCalendarSection({ booking, role, onBook, onCancel
         startTime={booking.startTime}
         endTime={booking.endTime}
         onClick={() => setOpen(true)}
+        cancelled={booking.status === 2}
         variant={variant}
       />
 
-      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onBook={onBook} onCancel={onCancel} />
+      <BookingActionsModal opened={open} onClose={() => setOpen(false)} role={role} booking={booking} variant={variant} onCancel={onCancel} />
     </>
   );
 }

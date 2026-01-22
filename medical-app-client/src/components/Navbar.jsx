@@ -1,6 +1,5 @@
 import styled from "styled-components";
 import { IconHomeFilled, IconUserFilled, IconClockFilled } from "@tabler/icons-react";
-import { useMediaQuery } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
@@ -75,6 +74,7 @@ function Navbar() {
 
   return (
     <StyledNavbar>
+      <NavTitle>HealthCare AB</NavTitle>
       <NavIcons>
         <NavLink to="/">
           <IconHomeFilled size={28} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
@@ -47,12 +47,40 @@ function getWeekRangeString(weekDates) {
   return `${start} - ${end}`;
 }
 
+// ----- Normalization helpers -----
+function normalizeAvailableSlotsResponse(apiData) {
+  if (!apiData || !Array.isArray(apiData.availableSlots)) return [];
+
+  return [
+    {
+      caregiverId: apiData.caregiverId,
+      caregiverName: apiData.caregiverName,
+      bookings: apiData.availableSlots.map((day) => ({
+        date: day.date.split("T")[0],
+        appointments: day.timeSlots.map((slot) => ({
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        })),
+      })),
+    },
+  ];
+}
+
+function normalizeAppointmentsResponse(apiData) {
+  if (!apiData) return [];
+  if (Array.isArray(apiData)) return apiData;
+  if (Array.isArray(apiData.appointments)) return apiData.appointments;
+
+  console.warn("Unexpected appointments response shape:", apiData);
+  return [];
+}
+
 // ----- Main component -----
 export default function BookingCalendar() {
-  const { authState } = useAuth();
-  const role = authState.role || "patient";
+  const { authState: { entityId, roles } } = useAuth();
+  const role = roles.includes("Patient") ? "patient" : roles.includes("Caregiver") ? "caregiver" : null;
 
-  const { caregiverId } = useParams(); // optional caregiver ID
+  const { caregiverId } = useParams();
 
   const today = new Date();
   const maxBookingDate = new Date();
@@ -64,33 +92,38 @@ export default function BookingCalendar() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ----- Fetch data using Axios -----
-  useEffect(() => {
+  // ----- Refetch function -----
+  const fetchData = async () => {
     setLoading(true);
+    try {
+      if (caregiverId) {
+        const [bookingsRes, appointmentsRes] = await Promise.all([
+          axios.get("http://localhost:5256/api/Appointments/available-slots", {
+            params: {
+              CaregiverId: caregiverId,
+              StartDate: today.toISOString(),
+              EndDate: maxBookingDate.toISOString(),
+            },
+            withCredentials: true,
+          }),
+          axios.get("http://localhost:5256/api/appointments", { withCredentials: true }),
+        ]);
 
-    const fetchData = async () => {
-      try {
-        if (caregiverId) {
-          // Fetch bookings and appointments for a specific caregiver
-          const [bookingsRes, appointmentsRes] = await Promise.all([
-            axios.get(`/api/bookings/${caregiverId}`, { withCredentials: true }), // cookies if used
-            axios.get(`/api/appointments/${caregiverId}`, { withCredentials: true }),
-          ]);
-
-          setBookings(bookingsRes.data.bookings || []);
-          setAppointments(appointmentsRes.data.appointments || []);
-        } else {
-          // Fetch only appointments (no caregiver selected)
-          const res = await axios.get("/api/appointments", { withCredentials: true });
-          setAppointments(res.data.appointments || []);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+        setBookings(normalizeAvailableSlotsResponse(bookingsRes.data));
+        setAppointments(normalizeAppointmentsResponse(appointmentsRes.data));
+      } else {
+        const res = await axios.get("http://localhost:5256/api/appointments", { withCredentials: true });
+        setAppointments(normalizeAppointmentsResponse(res.data));
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // ----- Fetch on mount & caregiver change -----
+  useEffect(() => {
     fetchData();
   }, [caregiverId]);
 
@@ -137,6 +170,44 @@ export default function BookingCalendar() {
     monday.setDate(monday.getDate() + 7);
   }
 
+  // ----- Appointment API calls (with refetch) -----
+  const createAppointment = async (slot) => {
+    try {
+      const payload = {
+        patientId: entityId,
+        caregiverId: slot.caregiverId,
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        patientNotes: null,
+      };
+
+      await axios.post("http://localhost:5256/api/appointments", payload, { withCredentials: true });
+
+      // Refetch bookings & appointments
+      await fetchData();
+
+      alert("Appointment created successfully!");
+    } catch (err) {
+      console.error("Failed to create appointment", err);
+      alert(err.response?.data?.error ?? "Could not create appointment");
+    }
+  };
+
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      await axios.put(`http://localhost:5256/api/appointments/cancel/${appointmentId}`, {}, { withCredentials: true });
+
+      // Refetch bookings & appointments
+      await fetchData();
+
+      alert("Appointment cancelled successfully!");
+    } catch (err) {
+      console.error("Failed to cancel appointment", err);
+      alert(err.response?.data?.message ?? "Could not cancel appointment");
+    }
+  };
+
   if (loading) {
     return (
       <Group position="center" style={{ minHeight: "80vh" }}>
@@ -148,45 +219,10 @@ export default function BookingCalendar() {
   return (
     <>
       {/* Header */}
-      <Group
-        position="apart"
-        style={{
-          justifyContent: "center",
-          margin: "10px 0",
-          marginTop: "28px",
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <Button
-          onClick={prevWeek}
-          style={{
-            minWidth: "120px",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            backgroundColor: "#057d7a",
-            color: "white",
-            fontWeight: 500,
-            transition: "all 0.2s ease",
-          }}
-        >
-          Previous Week
-        </Button>
+      <Group position="apart" style={{ justifyContent: "center", margin: "28px 0 10px", flexWrap: "wrap", gap: 10 }}>
+        <Button onClick={prevWeek}>Previous Week</Button>
         <Text weight={500}>{getWeekRangeString(weekDates)}</Text>
-        <Button
-          onClick={nextWeek}
-          style={{
-            minWidth: "120px",
-            padding: "6px 12px",
-            borderRadius: "6px",
-            backgroundColor: "#057d7a",
-            color: "white",
-            fontWeight: 500,
-            transition: "all 0.2s ease",
-          }}
-        >
-          Next Week
-        </Button>
+        <Button onClick={nextWeek}>Next Week</Button>
 
         <Select
           style={{ minWidth: 200 }}
@@ -202,7 +238,6 @@ export default function BookingCalendar() {
           }))}
         />
 
-        {/* Toggle for patients only and only if caregiverId exists */}
         {role === "patient" && caregiverId && (
           <SegmentedControl
             value={view}
@@ -211,7 +246,6 @@ export default function BookingCalendar() {
               { label: "Available Slots", value: "bookings" },
               { label: "Appointments", value: "appointments" },
             ]}
-            size="md"
           />
         )}
       </Group>
@@ -224,9 +258,8 @@ export default function BookingCalendar() {
 
           return (
             <BookingCalendarColumn key={colIndex}>
-              <Text weight={500}>
-                {`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}
-              </Text>
+              <Text weight={500}>{`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}</Text>
+
               {dataForColumn.length > 0 ? (
                 dataForColumn.map((item) => (
                   <BookingCalendarSection
@@ -234,6 +267,8 @@ export default function BookingCalendar() {
                     booking={item}
                     role={role}
                     variant={view}
+                    onBook={() => createAppointment(item)}
+                    onCancel={() => cancelAppointment(item.id)}
                   />
                 ))
               ) : (
