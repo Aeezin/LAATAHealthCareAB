@@ -70,8 +70,8 @@ public class AppointmentRepository : IAppointmentRepository
         return await _context.Appointments
             .Where(a => a.CaregiverId == caregiverId &&
                         a.Date >= DateOnly.FromDateTime(startDate) &&
-                        a.Date <= DateOnly.FromDateTime(endDate) &&
-                        a.Status != AppointmentStatus.Cancelled)
+                        a.Date <= DateOnly.FromDateTime(endDate))
+            //          && a.Status != AppointmentStatus.Cancelled
             .ToListAsync();
     }
 
