@@ -44,7 +44,7 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    console.log("Credentials being sent:", credentials);
     try {
       var LOGIN_URL = "";
       if (userType === UserType.ADMIN) {
@@ -72,7 +72,7 @@ function Login() {
         isAuthenticated: true,
         user: loggedInUser,
         roles: roles,
-        entityId: entityId,
+        entityId
       });
 
       // Redirect based on user role
@@ -85,6 +85,7 @@ function Login() {
         navigate("/", { replace: true });
       }
     } catch (error) {
+      console.error("Login failed:", error.response?.data);
       console.error("Login failed:", error.response || error);
       setError("Invalid username or password");
     }

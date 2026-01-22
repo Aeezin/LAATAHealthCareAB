@@ -3,44 +3,42 @@ import styled from "styled-components";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useState, useEffect } from 'react';
+import { NavLink, useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 
 
-const GET_URL_PATIENTS = "http://localhost:5256/api/Patients";
+const GET_URL_CAREGIVERS = "http://localhost:5256/api/Caregivers";
 const ChoosePatientContainer = styled(Stack)` align-items: center; padding 600px `;
 
 
-const PatientCard = styled(UnstyledButton)` transition: transform 0.2s, box-shadow 0.2s; border-radius: 8px;    &:hover {
+const CaregiverCard = styled(UnstyledButton)` transition: transform 0.2s, box-shadow 0.2s; border-radius: 8px;    &:hover {
         transform: translateY(-4px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 `;
 
-const PatientProfileContainer = styled(Stack)`
+const CaregiverProfileContainer = styled(Stack)`
     align-items: center;
     padding: 2rem;
 `;
 
 
 
-function PatientProfile() {
-    const [patient, setPatient] = useState(null);
+function CaregiverProfile() {
+    const [caregiver, setPatient] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
-    const { logout } = useAuth();
 
     const { authState: { user, entityId, roles } } = useAuth();
     useEffect(() => {
-        const fetchPatientProfile = async () => {
+        const fetchCaregiverProfile = async () => {
             if (!entityId) {
                 setError("No patient ID found");
                 setLoading(false);
                 return;
             }
             try {
-                const response = await axios.get(`${GET_URL_PATIENTS}/${entityId}`, {
+                const response = await axios.get(`${GET_URL_CAREGIVERS}/${entityId}`, {
                     withCredentials: true,
                 });
                 setPatient(response.data);
@@ -50,29 +48,14 @@ function PatientProfile() {
                 setLoading(false);
             }
         };
-        fetchPatientProfile();
+        fetchCaregiverProfile();
     }, [entityId]);
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
-    if (!patient) return <p>No patient data found</p>;
-
-    const handleLogout = async () => {
-        try {
-            await axios.post(
-                "http://localhost:5256/api/auth/logout",
-                {},
-                { withCredentials: true }
-            );
-
-            logout();
-            navigate("/");
-        } catch (err) {
-            console.error("Logout failed:", err);
-        }
-    };
+    if (!caregiver) return <p>No caregiver data found</p>;
 
     return (
-        <PatientProfileContainer>
+        <CaregiverProfileContainer>
             <Card shadow="sm" padding="xl" radius="md" withBorder style={{ minWidth: '300px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                     <Image
@@ -80,55 +63,41 @@ function PatientProfile() {
                         w={80}
                         fit="cover"
                         radius="50%"
-                        src={patient.profileImageUrl}
-                        alt={`${patient.firstName} ${patient.lastName}`}
+                        src={caregiver.profileImageUrl}
+                        alt={`${caregiver.firstName} ${caregiver.lastName}`}
                         fallbackSrc="https://placehold.co/80x80?text=No+Image"
                     />
                     <div>
                         <Text fw={600} size="lg">
-                            {patient.firstName} {patient.lastName}
+                            {caregiver.firstName} {caregiver.lastName}
                         </Text>
                         <Text size="sm" c="dimmed">
-                            {patient.email}
+                            {caregiver.email}
                         </Text>
                     </div>
                 </div>
 
-
-
                 <Text size="sm" mb="sm">
-                    <strong>Phone:</strong> {patient.phoneNumber || "Not available"}
-                </Text>
-                <Text size="sm" mb="sm">
-                    <strong>Email:</strong> {patient.email || "Not available"}
+                    <strong>Email:</strong> {caregiver.email || "Not available"}
                 </Text>
                 <Text size="sm" mb="xl">
-                    <strong>Date of birth:</strong> {patient.dateOfBirth || "Not available"}
+                    <strong>Specialisation</strong> {caregiver.specialisation  || "Not available"}
                 </Text>
-                <Link key={patient.id} to={"/booking/"} >
+                <Text size="sm" mb="xl">
+                    <strong>Room</strong> {caregiver.room || "Not available"}
+                </Text>
+                <Link key={caregiver.id} to={"/booking/"} >
                     <Button fullWidth mb="sm">
                         Your Appointments
                     </Button>
                 </Link>
 
-                <Button fullWidth mb="sm">
-                    Edit Profile
-                </Button>
-                <Button
-                    fullWidth
-                    color="red"
-                    mb="sm"
-                    variant="outline"
-                    onClick={handleLogout}
-                >
+                <Button fullWidth color="red" mb="sm" variant="outline">
                     Logout
                 </Button>
 
-                <Button fullWidth color="red" mb="sm" variant="outline">
-                    Remove Account
-                </Button>
             </Card>
-        </PatientProfileContainer >
+        </CaregiverProfileContainer >
     );
 }
-export default PatientProfile;
+export default CaregiverProfile;

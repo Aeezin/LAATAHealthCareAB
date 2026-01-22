@@ -81,7 +81,6 @@ namespace HealthCareAB_v1.Services
                     string fullPin = PersonalIdentityNumber(registerDto.PersonalIdentityNumber);
 
                     string dateOfBirth = fullPin.Substring(0, 8);
-                    string lastFour = fullPin.Substring(9, 4);
 
                     Patient patient = new Patient
                     {
@@ -90,7 +89,7 @@ namespace HealthCareAB_v1.Services
                         LastName = registerDto.LastName,
                         PhoneNumber = registerDto.PhoneNumber,
                         DateOfBirth = dateOfBirth,
-                        PersonalIdentityNumber = lastFour,
+                        PersonalIdentityNumber = registerDto.PersonalIdentityNumber,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
                     };
@@ -401,7 +400,7 @@ namespace HealthCareAB_v1.Services
         /// <inheritdoc />
         public CookieOptions GetJwtCookieOptions()
         {
-            return new CookieOptions 
+            return new CookieOptions
             {
                 HttpOnly = true,
                 Secure = !_isDevelopment,
@@ -446,12 +445,16 @@ namespace HealthCareAB_v1.Services
 
             if (normalized.Length != 13)
             {
-                throw new ArgumentException("Personal identity number must be exactly 13 characters (YYYYMMDD-XXXX).");
+                throw new ArgumentException(
+                    "Personal identity number must be exactly 13 characters (YYYYMMDD-XXXX)."
+                );
             }
 
             if (normalized[8] != '-')
             {
-                throw new ArgumentException("Personal identity number must contain '-' in position 9 (YYYYMMDD-XXXX).");
+                throw new ArgumentException(
+                    "Personal identity number must contain '-' in position 9 (YYYYMMDD-XXXX)."
+                );
             }
 
             for (int i = 0; i < normalized.Length; i++)
@@ -463,7 +466,9 @@ namespace HealthCareAB_v1.Services
 
                 if (!char.IsDigit(normalized[i]))
                 {
-                    throw new ArgumentException("Personal identity number must contain only digits except for '-'.");
+                    throw new ArgumentException(
+                        "Personal identity number must contain only digits except for '-'."
+                    );
                 }
             }
 

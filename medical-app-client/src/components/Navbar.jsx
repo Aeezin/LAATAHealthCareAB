@@ -66,6 +66,13 @@ function Navbar() {
   const isPatient = roles.includes("Patient");
   const isCaregiver = roles.includes("Caregiver");
 
+
+  const profileRoute = isPatient
+    ? "/profile-patient"
+    : isCaregiver
+      ? "/profile-caregiver"
+      : null;
+
   const bookingRoute = isPatient
     ? "/choose-caregiver"
     : isCaregiver
@@ -82,7 +89,7 @@ function Navbar() {
 
         {isAuthenticated && (
           <>
-            <NavLink to="/profile">
+            <NavLink to={profileRoute}>
               <IconUserFilled size={28} />
             </NavLink>
 

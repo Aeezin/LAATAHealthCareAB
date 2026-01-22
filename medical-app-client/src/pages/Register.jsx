@@ -136,7 +136,7 @@ function Register() {
 
   const isFormValid =
     allFieldsFilled && strength === 100 && match && (credentials.phone.length === 0 || isValidSwedishPhoneNumber(credentials.phone)) && validateForm;
-    
+
   const handleRegistration = async (e) => {
     e.preventDefault();
 
@@ -156,23 +156,25 @@ function Register() {
 
       console.log("Registration successful:", JSON.stringify(response.data));
 
-      const { loggedInUser, roles } = response.data;
+      const { loggedInUser, roles, entityId } = response.data;
 
       // Update global auth state with user information
       setAuthState({
         isAuthenticated: true,
         user: loggedInUser,
         roles: roles,
+        entityId
       });
+
 
       // Redirect based on user role
       if (roles.includes("Admin")) {
         throw new Error("Admin login not implemented yet");
         // navigate("/admin/dashboard", { replace: true });
       } else if (roles.includes("Patient")) {
-        navigate("/patient/dashboard", { replace: true });
+        navigate("/", { replace: true });
       } else if (roles.includes("Caregiver")) {
-        navigate("/caregiver/dashboard", { replace: true });
+        navigate("/", { replace: true });
       }
     } catch (error) {
       console.error("Registration failed:", error.response || error);
