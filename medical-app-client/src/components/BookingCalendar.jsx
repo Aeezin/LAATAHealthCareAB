@@ -3,7 +3,14 @@ import { useAuth } from "../hooks/useAuth";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
-import { Group, Text, Button, Select, Loader, SegmentedControl } from "@mantine/core";
+import {
+  Group,
+  Text,
+  Button,
+  Select,
+  Loader,
+  SegmentedControl,
+} from "@mantine/core";
 import BookingCalendarSection from "./BookingCalendarSection";
 import BookingCalendarColumn from "./BookingCalendarColumn";
 
@@ -70,15 +77,20 @@ function normalizeAppointmentsResponse(apiData) {
   if (!apiData) return [];
   if (Array.isArray(apiData)) return apiData;
   if (Array.isArray(apiData.appointments)) return apiData.appointments;
-
-  console.warn("Unexpected appointments response shape:", apiData);
   return [];
 }
 
 // ----- Main component -----
 export default function BookingCalendar() {
-  const { authState: { entityId, roles } } = useAuth();
-  const role = roles.includes("Patient") ? "patient" : roles.includes("Caregiver") ? "caregiver" : null;
+  const {
+    authState: { entityId, roles },
+  } = useAuth();
+
+  const role = roles.includes("Patient")
+    ? "patient"
+    : roles.includes("Caregiver")
+    ? "caregiver"
+    : null;
 
   const { caregiverId } = useParams();
 
@@ -98,21 +110,29 @@ export default function BookingCalendar() {
     try {
       if (caregiverId) {
         const [bookingsRes, appointmentsRes] = await Promise.all([
-          axios.get("http://localhost:5256/api/Appointments/available-slots", {
-            params: {
-              CaregiverId: caregiverId,
-              StartDate: today.toISOString(),
-              EndDate: maxBookingDate.toISOString(),
-            },
+          axios.get(
+            "http://localhost:5256/api/Appointments/available-slots",
+            {
+              params: {
+                CaregiverId: caregiverId,
+                StartDate: today.toISOString(),
+                EndDate: maxBookingDate.toISOString(),
+              },
+              withCredentials: true,
+            }
+          ),
+          axios.get("http://localhost:5256/api/appointments", {
             withCredentials: true,
           }),
-          axios.get("http://localhost:5256/api/appointments", { withCredentials: true }),
         ]);
 
         setBookings(normalizeAvailableSlotsResponse(bookingsRes.data));
         setAppointments(normalizeAppointmentsResponse(appointmentsRes.data));
       } else {
-        const res = await axios.get("http://localhost:5256/api/appointments", { withCredentials: true });
+        const res = await axios.get(
+          "http://localhost:5256/api/appointments",
+          { withCredentials: true }
+        );
         setAppointments(normalizeAppointmentsResponse(res.data));
       }
     } catch (err) {
@@ -122,15 +142,13 @@ export default function BookingCalendar() {
     }
   };
 
-  // ----- Fetch on mount & caregiver change -----
   useEffect(() => {
     fetchData();
   }, [caregiverId]);
 
-  // ----- Week dates -----
+  // ----- Week data -----
   const weekDates = getWeekDates(currentWeekStart);
   const weekDateStrings = weekDates.map(formatDate);
-
   const allBookingSlots = bookings.flatMap((caregiver) =>
     caregiver.bookings.flatMap((day) =>
       day.appointments.map((slot, index) => ({
@@ -140,21 +158,25 @@ export default function BookingCalendar() {
         date: day.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
+        patientNotes: "", // ✅ REQUIRED
       }))
     )
   );
 
   const dataForWeek =
     view === "bookings"
-      ? allBookingSlots.filter((slot) => weekDateStrings.includes(slot.date))
-      : appointments.filter((appt) => weekDateStrings.includes(appt.date));
+      ? allBookingSlots.filter((slot) =>
+          weekDateStrings.includes(slot.date)
+        )
+      : appointments.filter((appt) =>
+          weekDateStrings.includes(appt.date)
+        );
 
   // ----- Week navigation -----
   const prevWeek = () => {
     const newMonday = new Date(currentWeekStart);
     newMonday.setDate(newMonday.getDate() - 7);
-    const lowerBound = getMonday(today);
-    if (newMonday >= lowerBound) setCurrentWeekStart(newMonday);
+    if (newMonday >= getMonday(today)) setCurrentWeekStart(newMonday);
   };
 
   const nextWeek = () => {
@@ -166,11 +188,11 @@ export default function BookingCalendar() {
   const allMondays = [];
   let monday = getMonday(today);
   while (monday <= maxBookingDate) {
-    allMondays.push(new Date(monday.getTime()));
+    allMondays.push(new Date(monday));
     monday.setDate(monday.getDate() + 7);
   }
 
-  // ----- Appointment API calls (with refetch) -----
+  // ----- API calls -----
   const createAppointment = async (slot) => {
     try {
       const payload = {
@@ -179,14 +201,16 @@ export default function BookingCalendar() {
         date: slot.date,
         startTime: slot.startTime,
         endTime: slot.endTime,
-        patientNotes: null,
+        patientNotes: slot.patientNotes,
       };
 
-      await axios.post("http://localhost:5256/api/appointments", payload, { withCredentials: true });
+      await axios.post(
+        "http://localhost:5256/api/appointments",
+        payload,
+        { withCredentials: true }
+      );
 
-      // Refetch bookings & appointments
       await fetchData();
-
       alert("Appointment created successfully!");
     } catch (err) {
       console.error("Failed to create appointment", err);
@@ -196,11 +220,13 @@ export default function BookingCalendar() {
 
   const cancelAppointment = async (appointmentId) => {
     try {
-      await axios.put(`http://localhost:5256/api/appointments/cancel/${appointmentId}`, {}, { withCredentials: true });
+      await axios.put(
+        `http://localhost:5256/api/appointments/cancel/${appointmentId}`,
+        {},
+        { withCredentials: true }
+      );
 
-      // Refetch bookings & appointments
       await fetchData();
-
       alert("Appointment cancelled successfully!");
     } catch (err) {
       console.error("Failed to cancel appointment", err);
@@ -219,9 +245,17 @@ export default function BookingCalendar() {
   return (
     <>
       {/* Header */}
-      <Group position="apart" style={{ justifyContent: "center", margin: "28px 0 10px", flexWrap: "wrap", gap: 10 }}>
+      <Group
+        position="apart"
+        style={{
+          justifyContent: "center",
+          margin: "28px 0 10px",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
         <Button onClick={prevWeek}>Previous Week</Button>
-        <Text weight={500}>{getWeekRangeString(weekDates)}</Text>
+        <Text fw={500}>{getWeekRangeString(weekDates)}</Text>
         <Button onClick={nextWeek}>Next Week</Button>
 
         <Select
@@ -229,7 +263,9 @@ export default function BookingCalendar() {
           placeholder="Jump to week"
           value={formatDate(currentWeekStart)}
           onChange={(val) => {
-            const selected = allMondays.find((d) => formatDate(d) === val);
+            const selected = allMondays.find(
+              (d) => formatDate(d) === val
+            );
             if (selected) setCurrentWeekStart(selected);
           }}
           data={allMondays.map((d) => ({
@@ -254,11 +290,17 @@ export default function BookingCalendar() {
       <BookingCalendarContainer>
         {weekDates.map((date, colIndex) => {
           const dateString = formatDate(date);
-          const dataForColumn = dataForWeek.filter((item) => item.date === dateString);
+          const dataForColumn = dataForWeek.filter(
+            (item) => item.date === dateString
+          );
 
           return (
             <BookingCalendarColumn key={colIndex}>
-              <Text weight={500}>{`${date.toLocaleDateString("en-US", { weekday: "short" })} - ${dateString}`}</Text>
+              <Text fw={500}>
+                {`${date.toLocaleDateString("en-US", {
+                  weekday: "short",
+                })} - ${dateString}`}
+              </Text>
 
               {dataForColumn.length > 0 ? (
                 dataForColumn.map((item) => (
@@ -267,13 +309,18 @@ export default function BookingCalendar() {
                     booking={item}
                     role={role}
                     variant={view}
-                    onBook={() => createAppointment(item)}
+                    onBook={(updatedBooking) =>
+                      createAppointment(updatedBooking)
+                    }
                     onCancel={() => cancelAppointment(item.id)}
                   />
                 ))
               ) : (
                 <Text size="xs" c="dimmed">
-                  No {view === "bookings" ? "available slots" : "appointments"}
+                  No{" "}
+                  {view === "bookings"
+                    ? "available slots"
+                    : "appointments"}
                 </Text>
               )}
             </BookingCalendarColumn>
